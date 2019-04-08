@@ -69,6 +69,7 @@ setup(
     install_requires=[
         "django>=1.11",
         "future>=0.17.1",
+        "wrapt>=1.11",
     ],
     extras_require={
         # eg:

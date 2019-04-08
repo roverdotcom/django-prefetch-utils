@@ -634,7 +634,7 @@ class CustomPrefetchTests(TestCase):
             )
         self.assertEqual(lst1, lst2)
 
-    def test_custom_qs(self):
+    def test_custom_qs_basic(self):
         # Test basic.
         with self.assertNumQueries(2):
             lst1 = list(Person.objects.prefetch_related('houses'))
@@ -646,6 +646,7 @@ class CustomPrefetchTests(TestCase):
             self.traverse_qs(lst2, [['houses_lst']])
         )
 
+    def test_custom_qs_queryset_filtering(self):
         # Test queryset filtering.
         with self.assertNumQueries(2):
             lst2 = list(
@@ -662,6 +663,7 @@ class CustomPrefetchTests(TestCase):
         self.assertEqual(len(lst2[1].houses_lst), 1)
         self.assertEqual(lst2[1].houses_lst[0], self.house3)
 
+    def test_custom_qs_flattened(self):
         # Test flattened.
         with self.assertNumQueries(3):
             lst1 = list(Person.objects.prefetch_related('houses__rooms'))
@@ -673,6 +675,7 @@ class CustomPrefetchTests(TestCase):
             self.traverse_qs(lst2, [['houses', 'rooms_lst']])
         )
 
+    def test_custom_qs_inner_select_related(self):
         # Test inner select_related.
         with self.assertNumQueries(3):
             lst1 = list(Person.objects.prefetch_related('houses__owner'))
@@ -684,6 +687,7 @@ class CustomPrefetchTests(TestCase):
             self.traverse_qs(lst2, [['houses', 'owner']])
         )
 
+    def test_custom_qs_inner_prefetch(self):
         # Test inner prefetch.
         inner_rooms_qs = Room.objects.filter(pk__in=[self.room1_1.pk, self.room1_2.pk])
         houses_qs_prf = House.objects.prefetch_related(
@@ -700,6 +704,7 @@ class CustomPrefetchTests(TestCase):
         self.assertEqual(lst2[0].houses_lst[0].rooms_lst[0].main_room_of, self.house1)
         self.assertEqual(len(lst2[1].houses_lst), 0)
 
+    def test_custom_qs_forward_many_to_one(self):
         # Test ForwardManyToOneDescriptor.
         houses = House.objects.select_related('owner')
         with self.assertNumQueries(6):
@@ -709,26 +714,41 @@ class CustomPrefetchTests(TestCase):
             rooms = Room.objects.all().prefetch_related(Prefetch('house', queryset=houses.all()))
             lst2 = self.traverse_qs(rooms, [['house', 'owner']])
         self.assertEqual(lst1, lst2)
+
+    def test_custom_qs_forward_many_to_one_to_attr(self):
+        houses = House.objects.select_related('owner')
+        with self.assertNumQueries(6):
+            rooms = Room.objects.all().prefetch_related('house')
+            lst1 = self.traverse_qs(rooms, [['house', 'owner']])
         with self.assertNumQueries(2):
             houses = House.objects.select_related('owner')
             rooms = Room.objects.all().prefetch_related(Prefetch('house', queryset=houses.all(), to_attr='house_attr'))
             lst2 = self.traverse_qs(rooms, [['house_attr', 'owner']])
         self.assertEqual(lst1, lst2)
+
+    def test_custom_qs_forward_many_to_one_result_cache_empty(self):
+        houses = House.objects.select_related('owner')
         room = Room.objects.all().prefetch_related(
             Prefetch('house', queryset=houses.filter(address='DoesNotExist'))
         ).first()
         with self.assertRaises(ObjectDoesNotExist):
             getattr(room, 'house')
+
+    def test_custom_qs_forward_many_to_one_empty_to_attr(self):
+        houses = House.objects.select_related('owner')
         room = Room.objects.all().prefetch_related(
             Prefetch('house', queryset=houses.filter(address='DoesNotExist'), to_attr='house_attr')
         ).first()
         self.assertIsNone(room.house_attr)
+
+    def test_custom_qs_forward_many_to_one_only(self):
         rooms = Room.objects.all().prefetch_related(Prefetch('house', queryset=House.objects.only('name')))
         with self.assertNumQueries(2):
             getattr(rooms.first().house, 'name')
         with self.assertNumQueries(3):
             getattr(rooms.first().house, 'address')
 
+    def test_custom_qs_reverse_one_to_one(self):
         # Test ReverseOneToOneDescriptor.
         houses = House.objects.select_related('owner')
         with self.assertNumQueries(6):
@@ -738,6 +758,12 @@ class CustomPrefetchTests(TestCase):
             rooms = Room.objects.all().prefetch_related(Prefetch('main_room_of', queryset=houses.all()))
             lst2 = self.traverse_qs(rooms, [['main_room_of', 'owner']])
         self.assertEqual(lst1, lst2)
+
+    def test_custom_qs_reverse_one_to_one_to_attr(self):
+        houses = House.objects.select_related('owner')
+        with self.assertNumQueries(6):
+            rooms = Room.objects.all().prefetch_related('main_room_of')
+            lst1 = self.traverse_qs(rooms, [['main_room_of', 'owner']])
         with self.assertNumQueries(2):
             rooms = list(
                 Room.objects.all().prefetch_related(
@@ -746,16 +772,23 @@ class CustomPrefetchTests(TestCase):
             )
             lst2 = self.traverse_qs(rooms, [['main_room_of_attr', 'owner']])
         self.assertEqual(lst1, lst2)
+
+    def test_custom_qs_reverse_one_to_one_result_cache_empty(self):
+        houses = House.objects.select_related('owner')
         room = Room.objects.filter(main_room_of__isnull=False).prefetch_related(
             Prefetch('main_room_of', queryset=houses.filter(address='DoesNotExist'))
         ).first()
         with self.assertRaises(ObjectDoesNotExist):
             getattr(room, 'main_room_of')
+
+    def test_custom_qs_reverse_one_to_one_empty_to_attr(self):
+        houses = House.objects.select_related('owner')
         room = Room.objects.filter(main_room_of__isnull=False).prefetch_related(
             Prefetch('main_room_of', queryset=houses.filter(address='DoesNotExist'), to_attr='main_room_of_attr')
         ).first()
         self.assertIsNone(room.main_room_of_attr)
 
+    def test_custom_qs_manager_queryset_filters(self):
         # The custom queryset filters should be applied to the queryset
         # instance returned by the manager.
         person = Person.objects.prefetch_related(
@@ -1161,6 +1194,7 @@ class NullableTest(TestCase):
 
 
 class MultiDbTests(TestCase):
+    multi_db = True
     databases = {'default', 'other'}
 
     @requires_django_2_2
@@ -1256,6 +1290,8 @@ class MultiDbTests(TestCase):
         book1 = B.create(title="Poems")
         book2 = B.create(title="Sense and Sensibility")
 
+        print(self.databases)
+        print(A.all())
         A.create(name="Charlotte Bronte", first_book=book1)
         A.create(name="Jane Austen", first_book=book2)
 
