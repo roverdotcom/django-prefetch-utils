@@ -4,15 +4,9 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import copy
-import itertools
 import threading
-from builtins import map
-from collections import defaultdict
 from contextlib import contextmanager
-from operator import attrgetter
-from weakref import WeakValueDictionary
 
-import django
 import wrapt
 from django.core import exceptions
 from django.db.models import Manager
@@ -25,316 +19,13 @@ from django.db.models.fields.related_descriptors import ReverseOneToOneDescripto
 from django.db.models.query import normalize_prefetch_lookups
 from django.db.models.query import prefetch_one_level
 from django.utils.functional import cached_property
-from future.builtins import super
 
-
-class PrefetchIdentityMap(defaultdict):
-    def __init__(self):
-        super(PrefetchIdentityMap, self).__init__(WeakValueDictionary)
-
-    def __call__(self, obj):
-        return self[obj]
-
-    def __getitem__(self, obj):
-        subdict = super(PrefetchIdentityMap, self).__getitem__(type(obj))
-        try:
-            return subdict.setdefault(obj.pk, obj)
-        except AttributeError:
-            return obj
-
-    def get_map_for_model(self, model):
-        return super(PrefetchIdentityMap, self).__getitem__(model)
-
-
-class RelObjAttrMemoizingIdentityMap(wrapt.ObjectProxy):
-    __slots__ = ("_self_rel_obj_attr", "_self_memo")
-
-    def __init__(self, rel_obj_attr, wrapped):
-        super(RelObjAttrMemoizingIdentityMap, self).__init__(wrapped)
-        self._self_rel_obj_attr = rel_obj_attr
-        self._self_memo = {}
-
-    def __call__(self, obj):
-        return self[obj]
-
-    def __getitem__(self, obj):
-        new_obj = self.__wrapped__[obj]
-        self._self_memo[new_obj] = self._self_rel_obj_attr(obj)
-        return new_obj
-
-    def rel_obj_attr(self, rel_obj):
-        value = self._self_memo.get(rel_obj)
-        if value is not None:
-            return value
-        else:
-            return self._self_rel_obj_attr(rel_obj)
-
-
-class AnnotatingIdentityMap(wrapt.ObjectProxy):
-    __slots__ = ("_self_annotation_keys",)
-
-    def __init__(self, annotation_keys, wrapped):
-        super(AnnotatingIdentityMap, self).__init__(wrapped)
-        self._self_annotation_keys = annotation_keys
-
-    def __call__(self, obj):
-        return self[obj]
-
-    def __getitem__(self, obj):
-        new_obj = self.__wrapped__[obj]
-        if new_obj is not obj:
-            for key in self._self_annotation_keys:
-                setattr(new_obj, key, getattr(obj, key))
-        return new_obj
-
-
-class IdentityMapObjectProxy(wrapt.ObjectProxy):
-    __slots__ = "_self_identity_map"
-
-    def __init__(self, identity_map, wrapped):
-        super(IdentityMapObjectProxy, self).__init__(wrapped)
-        self._self_identity_map = identity_map
-
-
-class IdentityMapIteratorWrapper(IdentityMapObjectProxy):
-    def __iter__(self):
-        return map(self._self_identity_map, self.__wrapped__)
-
-
-class IdentityMapPrefetcher(IdentityMapObjectProxy):
-    def get_prefetch_queryset(self, instances, queryset=None):
-        prefetch_data = self.__wrapped__.get_prefetch_queryset(
-            instances, queryset=queryset
-        )
-        rel_qs, rel_obj_attr = prefetch_data[:2]
-        identity_map = self._self_identity_map
-
-        query = getattr(rel_qs, "query", None)
-        if getattr(query, "annotations", None):
-            identity_map = AnnotatingIdentityMap(set(query.annotations), identity_map)
-
-        identity_map = RelObjAttrMemoizingIdentityMap(rel_obj_attr, identity_map)
-        return (
-            IdentityMapIteratorWrapper(identity_map, rel_qs),
-            identity_map.rel_obj_attr,
-        ) + prefetch_data[2:]
-
-
-class IdentityMapPrefetchQuerySetWrapper(IdentityMapObjectProxy):
-    def __init__(self, identity_map, queryset):
-        query = getattr(queryset, "query", None)
-        if getattr(query, "annotations", None):
-            identity_map = AnnotatingIdentityMap(set(query.annotations), identity_map)
-        super(IdentityMapPrefetchQuerySetWrapper, self).__init__(identity_map, queryset)
-
-
-class ForwardDescriptorPrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrapper):
-    __slots__ = ("_self_field", "_self_instances_dict", "_self_suffix")
-
-    def __init__(self, identity_map, field, instances_dict, prefix, queryset):
-        super(ForwardDescriptorPrefetchQuerySetWrapper, self).__init__(
-            identity_map, queryset
-        )
-        self._self_field = field
-        self._self_instances_dict = instances_dict
-        self._self_prefix = prefix
-
-    def __iter__(self):
-        all_related_objects = itertools.chain(self._self_prefix, self.__wrapped__)
-        if self._self_field.remote_field.multiple:
-            for rel_obj in all_related_objects:
-                yield self._self_identity_map(rel_obj)
-            return
-
-        rel_obj_attr = self._self_field.get_foreign_related_value
-        rel_obj_cache_name = self._self_field.remote_field.get_cache_name()
-        for rel_obj in all_related_objects:
-            rel_obj = self._self_identity_map(rel_obj)
-            instance = self._self_instances_dict[rel_obj_attr(rel_obj)]
-            setattr(rel_obj, rel_obj_cache_name, instance)
-            yield rel_obj
-
-
-class ForwardDescriptorPrefetchWrapper(IdentityMapObjectProxy):
-    def get_prefetch_queryset(self, instances, queryset=None):
-        if queryset is None:
-            queryset = self.get_queryset()
-        queryset._add_hints(instance=instances[0])
-
-        rel_obj_attr = self.field.get_foreign_related_value
-        instance_attr = self.field.get_local_related_value
-        instances_dict = {instance_attr(inst): inst for inst in instances}
-        related_field = self.field.foreign_related_fields[0]
-
-        # Go through and find any instance which may already have their
-        # related object already in the identity map.
-        if (
-            len(self.field.foreign_related_fields) == 1
-            and not queryset.query.annotations
-        ):
-            sub_identity_map = self._self_identity_map.get_map_for_model(
-                self.field.related_model
-            )
-            new_instances = []
-            prefix = []
-            for instance in instances:
-                rel_pk = instance_attr(instance)[0]
-                rel_obj = sub_identity_map.get(rel_pk)
-                if rel_obj is not None:
-                    prefix.append(rel_obj)
-                else:
-                    new_instances.append(instance)
-            instances = new_instances
-        else:
-            prefix = []
-
-        # FIXME: This will need to be revisited when we introduce support for
-        # composite fields. In the meantime we take this practical approach to
-        # solve a regression on 1.6 when the reverse manager in hidden
-        # (related_name ends with a '+'). Refs #21410.
-        # The check for len(...) == 1 is a special case that allows the query
-        # to be join-less and smaller. Refs #21760.
-        if instances:
-            if (
-                self.field.remote_field.is_hidden()
-                or len(self.field.foreign_related_fields) == 1
-            ):
-                rhs = set(instance_attr(inst)[0] for inst in instances)
-                query = {"%s__in" % related_field.name: rhs}
-                if rhs == set([None]):
-                    queryset = queryset.none()
-                else:
-                    query = {"%s__in" % related_field.name: rhs}
-                    queryset = queryset.filter(**query)
-            else:
-                query = {"%s__in" % self.field.related_query_name(): instances}
-            queryset = queryset.filter(**query)
-        else:
-            queryset = queryset.none()
-
-        cache_name = getattr(self, "cache_name", self.field.get_cache_name())
-        queryset = ForwardDescriptorPrefetchQuerySetWrapper(
-            self._self_identity_map, self.field, instances_dict, prefix, queryset
-        )
-        prefetch_data = (queryset, rel_obj_attr, instance_attr, True, cache_name)
-        if django.VERSION < (2, 0):
-            return prefetch_data
-        else:
-            return prefetch_data + (False,)
-
-
-class ReverseOneToOnePrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrapper):
-    __slots__ = ("_self_related", "_self_instances_dict")
-
-    def __init__(self, identity_map, related, instances_dict, queryset):
-        super(ReverseOneToOnePrefetchQuerySetWrapper, self).__init__(
-            identity_map, queryset
-        )
-        self._self_related = related
-        self._self_instances_dict = instances_dict
-
-    def __iter__(self):
-        field = self._self_related.field
-        related_model_meta = field.related_model._meta
-        pk_field_name = related_model_meta.pk and related_model_meta.pk.name
-        if field.to_fields not in [[pk_field_name], [None]]:
-            to_fields = attrgetter(*field.to_fields)
-            instances_dict = {
-                to_fields(obj): obj
-                for obj in self._self_instances_dict.values()
-            }
-            print(instances_dict)
-        else:
-            instances_dict = self._self_instances_dict
-
-        rel_obj_attr = attrgetter(self._self_related.field.attname)
-        rel_obj_cache_name = self._self_related.field.get_cache_name()
-        for rel_obj in self.__wrapped__:
-            rel_obj = self._self_identity_map(rel_obj)
-            instance = instances_dict[rel_obj_attr(rel_obj)]
-            print(rel_obj, "--", instance, type(instance), rel_obj_cache_name)
-            setattr(rel_obj, rel_obj_cache_name, instance)
-            yield rel_obj
-
-
-class ReverseOneToOneDescriptorPrefetchWrapper(IdentityMapObjectProxy):
-    def get_prefetch_queryset(self, instances, queryset=None):
-        if queryset is None:
-            queryset = self.get_queryset()
-        queryset._add_hints(instance=instances[0])
-
-        # rel_obj_attr = self.related.field.get_local_related_value
-        rel_obj_attr = attrgetter(self.related.field.attname)
-
-        def instance_attr(obj):
-            return obj._get_pk_val()
-
-        instances_dict = {instance_attr(inst): inst for inst in instances}
-        query = {"%s__in" % self.related.field.name: instances}
-        queryset = queryset.filter(**query)
-
-        # Since we're going to assign directly in the cache,
-        # we must manage the reverse relation cache manually.
-        queryset = ReverseOneToOnePrefetchQuerySetWrapper(
-            self._self_identity_map, self.related, instances_dict, queryset
-        )
-        cache_name = getattr(self, "cache_name", self.related.get_cache_name())
-        prefetch_data = (queryset, rel_obj_attr, instance_attr, True, cache_name)
-        if django.VERSION < (2, 0):
-            return prefetch_data
-        else:
-            return prefetch_data + (False,)
-
-
-class ReverseManyToOnePrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrapper):
-    __slots__ = ("_self_field", "_self_instances_dict")
-
-    def __init__(self, identity_map, field, instances_dict, queryset):
-        super(ReverseManyToOnePrefetchQuerySetWrapper, self).__init__(
-            identity_map, queryset
-        )
-        self._self_field = field
-        self._self_instances_dict = instances_dict
-
-    def __iter__(self):
-        rel_obj_attr = self._self_field.get_local_related_value
-        for rel_obj in self.__wrapped__:
-            rel_obj = self._self_identity_map(rel_obj)
-            instance = self._self_instances_dict[rel_obj_attr(rel_obj)]
-            setattr(rel_obj, self._self_field.name, instance)
-
-            yield rel_obj
-
-
-class ReverseManyToOneDescriptorPrefetchWrapper(IdentityMapObjectProxy):
-    def get_prefetch_queryset(self, instances, queryset=None):
-        if queryset is None:
-            queryset = super(type(self.__wrapped__), self.__wrapped__).get_queryset()
-
-        queryset._add_hints(instance=instances[0])
-        queryset = queryset.using(queryset._db or self._db)
-
-        rel_obj_attr = self.field.get_local_related_value
-        instance_attr = self.field.get_foreign_related_value
-        instances_dict = {instance_attr(inst): inst for inst in instances}
-        query = {"%s__in" % self.field.name: instances}
-        queryset = queryset.filter(**query)
-
-        # Since we just bypassed this class' get_queryset(), we must manage
-        # the reverse relation manually.
-        queryset = ReverseManyToOnePrefetchQuerySetWrapper(
-            self._self_identity_map, self.field, instances_dict, queryset
-        )
-        if django.VERSION < (2, 0):
-            cache_name = self.field.related_query_name()
-        else:
-            cache_name = self.field.remote_field.get_cache_name()
-
-        prefetch_data = (queryset, rel_obj_attr, instance_attr, False, cache_name)
-        if django.VERSION < (2, 0):
-            return prefetch_data
-        else:
-            return prefetch_data + (False,)
+from .maps import PrefetchIdentityMap
+from .wrappers import ForwardDescriptorPrefetchWrapper
+from .wrappers import IdentityMapPrefetcher
+from .wrappers import ManyToManyRelatedManagerWrapper
+from .wrappers import ReverseManyToOneDescriptorPrefetchWrapper
+from .wrappers import ReverseOneToOneDescriptorPrefetchWrapper
 
 
 def get_identity_map_prefetcher(identity_map, descriptor, prefetcher):
@@ -346,8 +37,8 @@ def get_identity_map_prefetcher(identity_map, descriptor, prefetcher):
         ForwardOneToOneDescriptor: ForwardDescriptorPrefetchWrapper,
         ReverseOneToOneDescriptor: ReverseOneToOneDescriptorPrefetchWrapper,
         ReverseManyToOneDescriptor: ReverseManyToOneDescriptorPrefetchWrapper,
-        ManyToManyDescriptor: lambda identity_map, descriptor: descriptor,
-    }
+        ManyToManyDescriptor: ManyToManyRelatedManagerWrapper,
+      }
     wrapper_cls = wrappers.get(type(descriptor), IdentityMapPrefetcher)
     return wrapper_cls(identity_map, prefetcher)
 
@@ -445,15 +136,19 @@ thread_local = threading.local()
 def prefetch_identity_map():
     thread_local.identity_map = PrefetchIdentityMap()
     try:
-        yield
+        yield thread_local.identity_map
     finally:
         del thread_local.identity_map
 
 
-@wrapt.decorator
-def prefetch_identity_map_decorator(wrapped, instance, args, kwargs):
-    with prefetch_identity_map():
-        return wrapped(*args, **kwargs)
+def prefetch_identity_map_decorator(pass_identity_map=False):
+    @wrapt.decorator
+    def wrapper(wrapped, instance, args, kwargs):
+        with prefetch_identity_map() as identity_map:
+            if pass_identity_map:
+                args = (identity_map,) + args
+            return wrapped(*args, **kwargs)
+    return wrapper
 
 
 def prefetch_related_objects(model_instances, *related_lookups):
@@ -466,7 +161,7 @@ def prefetch_related_objects(model_instances, *related_lookups):
 
     # Create the identity map and add the model instances to it
     identity_map = getattr(thread_local, "identity_map", PrefetchIdentityMap())
-    model_instances = list(map(identity_map, model_instances))
+    model_instances = [identity_map[instance] for instance in model_instances]
 
     # We need to be able to dynamically add to the list of prefetch_related
     # lookups that we look up (see below).  So we need some book keeping to
