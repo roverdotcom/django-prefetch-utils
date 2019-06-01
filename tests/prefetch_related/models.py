@@ -72,6 +72,28 @@ class Bio(models.Model):
         primary_key=True,
         to_field='name',
     )
+    best_book = models.ForeignKey(Book, on_delete=models.SET_NULL, null=True)
+    books = models.ManyToManyField(Book, blank=True)
+
+
+class DirectBio(models.Model):
+    author = models.OneToOneField(
+        Author,
+        models.CASCADE,
+        primary_key=True,
+        related_name='direct_bio'
+    )
+    books = models.ManyToManyField(Book, blank=True)
+
+
+class YearlyBio(models.Model):
+    author = models.ForeignKey(
+        Author,
+        models.CASCADE,
+        primary_key=True,
+        related_name='yearly_bios'
+    )
+    year = models.IntegerField()
     books = models.ManyToManyField(Book, blank=True)
 
 
