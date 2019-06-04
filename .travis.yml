@@ -12,39 +12,74 @@ matrix:
   include:
     - python: '2.7'
       env:
-        - TOXENV=py27-1.11
+        - TOXENV=py27-1.11-cover,report,codecov
+    - python: '2.7'
+      env:
+        - TOXENV=py27-1.11-nocover
     - python: '3.6'
       env:
-        - TOXENV=py36-1.11
+        - TOXENV=py36-1.11-cover,report,codecov
     - python: '3.6'
       env:
-        - TOXENV=py36-2.0
+        - TOXENV=py36-1.11-nocover
     - python: '3.6'
       env:
-        - TOXENV=py36-2.1
+        - TOXENV=py36-2.0-cover,report,codecov
     - python: '3.6'
       env:
-        - TOXENV=py36-2.2
+        - TOXENV=py36-2.0-nocover
+    - python: '3.6'
+      env:
+        - TOXENV=py36-2.1-cover,report,codecov
+    - python: '3.6'
+      env:
+        - TOXENV=py36-2.1-nocover
+    - python: '3.6'
+      env:
+        - TOXENV=py36-2.2-cover,report,codecov
+    - python: '3.6'
+      env:
+        - TOXENV=py36-2.2-nocover
     - python: '3.7'
       dist: xenial
       sudo: required
       env:
-        - TOXENV=py37-1.11
+        - TOXENV=py37-1.11-cover,report,codecov
     - python: '3.7'
       dist: xenial
       sudo: required
       env:
-        - TOXENV=py37-2.0
+        - TOXENV=py37-1.11-nocover
     - python: '3.7'
       dist: xenial
       sudo: required
       env:
-        - TOXENV=py37-2.1
+        - TOXENV=py37-2.0-cover,report,codecov
     - python: '3.7'
       dist: xenial
       sudo: required
       env:
-        - TOXENV=py37-2.2
+        - TOXENV=py37-2.0-nocover
+    - python: '3.7'
+      dist: xenial
+      sudo: required
+      env:
+        - TOXENV=py37-2.1-cover,report,codecov
+    - python: '3.7'
+      dist: xenial
+      sudo: required
+      env:
+        - TOXENV=py37-2.1-nocover
+    - python: '3.7'
+      dist: xenial
+      sudo: required
+      env:
+        - TOXENV=py37-2.2-cover,report,codecov
+    - python: '3.7'
+      dist: xenial
+      sudo: required
+      env:
+        - TOXENV=py37-2.2-nocover
 before_install:
   - python --version
   - uname -a

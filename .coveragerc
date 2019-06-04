@@ -1,0 +1,16 @@
+[paths]
+source = src
+
+[run]
+branch = true
+source =
+    src
+    tests
+parallel = true
+omit =
+    tests/settings.py
+
+[report]
+show_missing = true
+precision = 2
+omit = *migrations*
