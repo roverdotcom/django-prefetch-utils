@@ -4,10 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import copy
-import threading
-from contextlib import contextmanager
 
-import wrapt
 from django.core import exceptions
 from django.db.models import Manager
 from django.db.models.constants import LOOKUP_SEP
@@ -19,6 +16,8 @@ from django.db.models.fields.related_descriptors import ReverseOneToOneDescripto
 from django.db.models.query import normalize_prefetch_lookups
 from django.db.models.query import prefetch_one_level
 from django.utils.functional import cached_property
+
+from django_prefetch_utils.selector import override_prefetch_related_objects
 
 from .maps import PrefetchIdentityMap
 from .wrappers import ForwardDescriptorPrefetchWrapper
@@ -129,29 +128,37 @@ def get_prefetched_objects_from_list(obj_list, through_attr):
     return new_obj_list
 
 
-thread_local = threading.local()
+def get_default_prefetch_identity_map():
+    """
+    Returns a empty default identity map for use during prefetching.
+    """
+    return PrefetchIdentityMap()
 
 
-@contextmanager
-def prefetch_identity_map():
-    thread_local.identity_map = PrefetchIdentityMap()
-    try:
-        yield thread_local.identity_map
-    finally:
-        del thread_local.identity_map
+def prefetch_related_objects(*args, **kwargs):
+    """
+    """
+    return prefetch_related_objects_impl(
+        get_default_prefetch_identity_map(),
+        *args,
+        **kwargs
+    )
 
 
-def prefetch_identity_map_decorator(pass_identity_map=False):
-    @wrapt.decorator
-    def wrapper(wrapped, instance, args, kwargs):
-        with prefetch_identity_map() as identity_map:
-            if pass_identity_map:
-                args = (identity_map,) + args
-            return wrapped(*args, **kwargs)
-    return wrapper
+def use_prefetch_identity_map():
+    """
+    A context decorator which enables the identity map version of
+    ``prefetch_related_objects``.
+
+    .. note::
+
+       A new identity map is created and used for each call of
+       ``prefetched_related_objects``.
+    """
+    return override_prefetch_related_objects(prefetch_related_objects)
 
 
-def prefetch_related_objects(model_instances, *related_lookups):
+def prefetch_related_objects_impl(identity_map, model_instances, *related_lookups):
     """
     Populate prefetched object caches for a list of model instances based on
     the lookups/Prefetch instances given.
@@ -160,7 +167,6 @@ def prefetch_related_objects(model_instances, *related_lookups):
         return  # nothing to do
 
     # Create the identity map and add the model instances to it
-    identity_map = getattr(thread_local, "identity_map", PrefetchIdentityMap())
     model_instances = [identity_map[instance] for instance in model_instances]
 
     # We need to be able to dynamically add to the list of prefetch_related

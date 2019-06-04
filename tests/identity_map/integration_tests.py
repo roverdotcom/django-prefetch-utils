@@ -5,14 +5,14 @@ from django.test import TestCase
 from prefetch_related.models import Author
 from prefetch_related.models import Bio
 from prefetch_related.models import Book
-from prefetch_related.models import DirectBio
-from prefetch_related.models import Person
 from prefetch_related.models import Bookmark
-from prefetch_related.models import TaggedItem
+from prefetch_related.models import DirectBio
 from prefetch_related.models import FavoriteAuthors
+from prefetch_related.models import Person
+from prefetch_related.models import TaggedItem
 from prefetch_related.models import YearlyBio
 
-from django_prefetch_utils.identity_map import prefetch_identity_map_decorator
+from django_prefetch_utils.identity_map.persistent import use_persistent_prefetch_identity_map
 
 from .mixins import EnableIdentityMapMixin
 
@@ -41,14 +41,14 @@ class ForwardDescriptorTestsMixin(EnableIdentityMapMixin):
             bio = self.bio_class.objects.prefetch_related('author').first()
             self.assertIs(getattr(bio.author, self.reverse_attr), bio)
 
-    @prefetch_identity_map_decorator(pass_identity_map=True)
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_no_additional_queries_if_related_object_in_identity_map(self, identity_map):
         author = identity_map[Author.objects.first()]
         with self.assertNumQueries(1):
             bio = self.bio_class.objects.prefetch_related('author').first()
             self.assertIs(bio.author, author)
 
-    @prefetch_identity_map_decorator(pass_identity_map=True)
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_annotations(self, identity_map):
         # Test that annotations from Prefetch.queryset are applied even
         # if the prefetched object already exists in the identity map
@@ -62,7 +62,7 @@ class ForwardDescriptorTestsMixin(EnableIdentityMapMixin):
         self.assertIs(bio.author, author)
         self.assertEqual(bio.author.double_id, 2 * author.id)
 
-    @prefetch_identity_map_decorator(pass_identity_map=True)
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_select_related(self, identity_map):
         # Test that annotations from Prefetch.queryset are applied even
         # if the prefetched object already exists in the identity map
@@ -114,7 +114,7 @@ class ReverseOneToOneTests(EnableIdentityMapMixin, TestCase):
             author = Author.objects.prefetch_related('bio').first()
             self.assertIs(author.bio.author, author)
 
-    @prefetch_identity_map_decorator(pass_identity_map=True)
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_annotations(self, identity_map):
         # Test that annotations from Prefetch.queryset are applied even
         # if the prefetched object already exists in the identity map
@@ -128,7 +128,7 @@ class ReverseOneToOneTests(EnableIdentityMapMixin, TestCase):
         self.assertIs(author.bio, bio)
         self.assertEqual(author.bio.double_id, 2 * bio.best_book_id)
 
-    @prefetch_identity_map_decorator(pass_identity_map=True)
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_select_related(self, identity_map):
         # Test that annotations from Prefetch.queryset are applied even
         # if the prefetched object already exists in the identity map
@@ -162,7 +162,7 @@ class ReverseManyToOneTests(EnableIdentityMapMixin, TestCase):
             book = Book.objects.prefetch_related('first_time_authors').first()
             self.assertIs(book.first_time_authors.all()[0].first_book, book)
 
-    @prefetch_identity_map_decorator(pass_identity_map=True)
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_annotations(self, identity_map):
         # Test that annotations from Prefetch.queryset are applied even
         # if the prefetched object already exists in the identity map
@@ -176,7 +176,7 @@ class ReverseManyToOneTests(EnableIdentityMapMixin, TestCase):
         self.assertIs(book.first_time_authors.all()[0], author)
         self.assertEqual(author.double_id, 2 * author.id)
 
-    @prefetch_identity_map_decorator(pass_identity_map=True)
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_select_related(self, identity_map):
         # Test that annotations from Prefetch.queryset are applied even
         # if the prefetched object already exists in the identity map
@@ -209,7 +209,7 @@ class ManyToManyDescriptorTests(EnableIdentityMapMixin, TestCase):
             likes_author=cls.charlotte
         )
 
-    @prefetch_identity_map_decorator(pass_identity_map=True)
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_annotations(self, identity_map):
         # Test that annotations from Prefetch.queryset are applied even
         # if the prefetched object already exists in the identity map
@@ -223,7 +223,7 @@ class ManyToManyDescriptorTests(EnableIdentityMapMixin, TestCase):
         self.assertIs(author.favorite_authors.all()[0], favorite)
         self.assertEqual(favorite.double_id, 2 * favorite.id)
 
-    @prefetch_identity_map_decorator(pass_identity_map=True)
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_select_related(self, identity_map):
         # Test that annotations from Prefetch.queryset are applied even
         # if the prefetched object already exists in the identity map
@@ -253,7 +253,7 @@ class GenericForeignKeyTests(EnableIdentityMapMixin, TestCase):
             favorite=cls.person,
         )
 
-    @prefetch_identity_map_decorator(pass_identity_map=True)
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_identity_map_works_with_generic_foreign_keys(self, identity_map):
         bookmark = identity_map[Bookmark.objects.first()]
         tagged_item = TaggedItem.objects.prefetch_related(
@@ -281,7 +281,7 @@ class GenericRelationTests(EnableIdentityMapMixin, TestCase):
             ).first()
             self.assertIs(bookmark.tags.all()[0].content_object, bookmark)
 
-    @prefetch_identity_map_decorator(pass_identity_map=True)
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_annotations(self, identity_map):
         # Test that annotations from Prefetch.queryset are applied even
         # if the prefetched object already exists in the identity map
@@ -295,7 +295,7 @@ class GenericRelationTests(EnableIdentityMapMixin, TestCase):
         self.assertIs(bookmark.tags.all()[0], tagged_item)
         self.assertEqual(tagged_item.double_id, 2 * tagged_item.id)
 
-    @prefetch_identity_map_decorator(pass_identity_map=True)
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_select_related(self, identity_map):
         tagged_item = identity_map[TaggedItem.objects.first()]
         bookmark = Bookmark.objects.prefetch_related(
