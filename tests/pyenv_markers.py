@@ -12,6 +12,6 @@ requires_django_2_1 = pytest.mark.skipif(
 )
 
 requires_django_2_0 = pytest.mark.skipif(
-    django.VERSION < (2, 1),
+    django.VERSION < (2, 0),
     reason="at least Django 2.0 required"
 )
