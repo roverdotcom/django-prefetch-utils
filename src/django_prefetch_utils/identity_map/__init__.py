@@ -64,40 +64,39 @@ def get_prefetcher(obj_list, through_attr, to_attr):
         attr_found = hasattr(instance, through_attr)
     else:
         attr_found = True
-        if rel_obj_descriptor:
-            # singly related object, descriptor object has the
-            # get_prefetch_queryset() method.
-            if hasattr(rel_obj_descriptor, "get_prefetch_queryset"):
-                prefetcher = rel_obj_descriptor
-                needs_fetching = [
-                    obj for obj in obj_list if not rel_obj_descriptor.is_cached(obj)
-                ]
-            else:
-                # descriptor doesn't support prefetching, so we go ahead and get
-                # the attribute on the instance rather than the class to
-                # support many related managers
-                rel_obj = getattr(instance, through_attr)
-                if hasattr(rel_obj, "get_prefetch_queryset"):
-                    prefetcher = rel_obj
-                if through_attr != to_attr:
-                    # Special case cached_property instances because hasattr
-                    # triggers attribute computation and assignment.
-                    if isinstance(
-                        getattr(instance.__class__, to_attr, None), cached_property
-                    ):
-                        needs_fetching = [
-                            obj for obj in obj_list if to_attr not in obj.__dict__
-                        ]
-                    else:
-                        needs_fetching = [
-                            obj for obj in obj_list if not hasattr(obj, to_attr)
-                        ]
+        # singly related object, descriptor object has the
+        # get_prefetch_queryset() method.
+        if hasattr(rel_obj_descriptor, "get_prefetch_queryset"):
+            prefetcher = rel_obj_descriptor
+            needs_fetching = [
+                obj for obj in obj_list if not rel_obj_descriptor.is_cached(obj)
+            ]
+        else:
+            # descriptor doesn't support prefetching, so we go ahead and get
+            # the attribute on the instance rather than the class to
+            # support many related managers
+            rel_obj = getattr(instance, through_attr)
+            if hasattr(rel_obj, "get_prefetch_queryset"):
+                prefetcher = rel_obj
+            if through_attr != to_attr:
+                # Special case cached_property instances because hasattr
+                # triggers attribute computation and assignment.
+                if isinstance(
+                    getattr(instance.__class__, to_attr, None), cached_property
+                ):
+                    needs_fetching = [
+                        obj for obj in obj_list if to_attr not in obj.__dict__
+                    ]
                 else:
                     needs_fetching = [
-                        obj
-                        for obj in obj_list
-                        if through_attr not in obj._prefetched_objects_cache
+                        obj for obj in obj_list if not hasattr(obj, to_attr)
                     ]
+            else:
+                needs_fetching = [
+                    obj
+                    for obj in obj_list
+                    if through_attr not in obj._prefetched_objects_cache
+                ]
 
     return prefetcher, rel_obj_descriptor, attr_found, needs_fetching
 
@@ -207,7 +206,7 @@ def prefetch_related_objects_impl(identity_map, model_instances, *related_lookup
                     "You may need to adjust the ordering of your lookups."
                     % lookup.prefetch_to
                 )
-            continue
+            continue  # pragma: no cover
 
         # Top level, the list of objects to decorate is the result cache
         # from the primary QuerySet. It won't be for deeper levels.
@@ -289,15 +288,12 @@ def prefetch_related_objects_impl(identity_map, model_instances, *related_lookup
                 # same relationships to stop infinite recursion. So, if we
                 # are already on an automatically added lookup, don't add
                 # the new lookups from relationships we've seen already.
-                if not (lookup in auto_lookups and descriptor in followed_descriptors):
+                if not (prefetch_to in done_queries and lookup in auto_lookups and descriptor in followed_descriptors):
                     done_queries[prefetch_to] = obj_list
                     add_additional_lookups_from_queryset(
                         prefetch_to, additional_lookups
                     )
-
-                # NOTE: We are commenting this out as it silently prevents some
-                # of our prefetches from working.
-                # followed_descriptors.add(descriptor)
+                followed_descriptors.add(descriptor)
             else:
                 # Either a singly related object that has already been fetched
                 # (e.g. via select_related), or hopefully some other property

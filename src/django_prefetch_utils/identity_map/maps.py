@@ -79,11 +79,7 @@ class RelObjAttrMemoizingIdentityMap(wrapt.ObjectProxy):
         return new_obj
 
     def rel_obj_attr(self, rel_obj):
-        value = self._self_memo.get(rel_obj)
-        if value is not None:
-            return value
-        else:
-            return self._self_rel_obj_attr(rel_obj)
+        return self._self_memo[rel_obj]
 
 
 class AnnotatingIdentityMap(wrapt.ObjectProxy):
