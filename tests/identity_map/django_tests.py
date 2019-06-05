@@ -97,6 +97,10 @@ DJANGO_TEST_MODULES = [
     "prefetch_related.tests",
     "prefetch_related.test_uuid",
     "prefetch_related.test_prefetch_related_objects",
+    "foreign_object.test_empty_join",
+    "foreign_object.test_agnostic_order_trimjoin",
+    "foreign_object.test_forms",
+    "foreign_object.tests",
 ]
 
 

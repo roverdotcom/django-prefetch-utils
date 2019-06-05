@@ -9,6 +9,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_prefetch_utils',
     'prefetch_related',
+    'foreign_object',
 ]
 ROOT_URLCONF = []
 

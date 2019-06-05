@@ -9,6 +9,8 @@ source =
 parallel = true
 omit =
     tests/settings.py
+    tests/foreign_object/*
+    tests/prefetch_related/*
 
 [report]
 show_missing = true

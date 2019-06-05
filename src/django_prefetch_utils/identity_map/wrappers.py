@@ -317,7 +317,7 @@ class ReverseManyToOneDescriptorPrefetchWrapper(IdentityMapObjectProxy):
         queryset = ReverseManyToOnePrefetchQuerySetWrapper(
             self._self_identity_map, self.field, instances_dict, queryset
         )
-        if django.VERSION < (2, 0):
+        if django.VERSION < (2, 1):
             cache_name = self.field.related_query_name()
         else:
             cache_name = self.field.remote_field.get_cache_name()
