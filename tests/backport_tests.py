@@ -2,7 +2,10 @@ from __future__ import absolute_import
 
 from importlib import import_module
 
+from django.db.models import Prefetch
 from django.test import TestCase
+from prefetch_related.models import Author
+from prefetch_related.models import Book
 
 from django_prefetch_utils.backport import prefetch_related_objects
 from django_prefetch_utils.selector import override_prefetch_related_objects
@@ -14,6 +17,18 @@ class EnableBackportMixin(object):
         cm = override_prefetch_related_objects(prefetch_related_objects)
         cm.__enter__()
         self.addCleanup(lambda: cm.__exit__(None, None, None))
+
+
+class MiscellaneousTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.book = Book.objects.create(title="Poems")
+        cls.author = Author.objects.create(name="Jane", first_book=cls.book)
+        cls.book.authors.add(cls.author)
+
+    def test_no_prefetches_are_done_with_no_model_instances(self):
+        with self.assertNumQueries(0):
+            prefetch_related_objects([], "authors")
 
 
 DJANGO_TEST_MODULES = [

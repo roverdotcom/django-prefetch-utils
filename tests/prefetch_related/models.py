@@ -318,3 +318,38 @@ class Flea(models.Model):
     current_room = models.ForeignKey(Room, models.SET_NULL, related_name='fleas', null=True)
     pets_visited = models.ManyToManyField(Pet, related_name='fleas_hosted')
     people_visited = models.ManyToManyField(Person, related_name='fleas_hosted')
+
+
+# Models for testing recursion protection
+class DogWithToysManager(models.Manager):
+    def get_queryset(self):
+        qs = super(DogWithToysManager, self).get_queryset()
+        return qs.prefetch_related("toys")
+
+
+class DogWithToys(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    objects = DogWithToysManager()
+
+
+class ToyWithDogsManager(models.Manager):
+    def get_queryset(self):
+        qs = super(ToyWithDogsManager, self).get_queryset()
+        return qs.prefetch_related("dogs")
+
+
+class ToyWithDogs(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    dogs = models.ManyToManyField(DogWithToys, related_name="toys")
+
+    objects = ToyWithDogsManager()
+
+
+class Dog(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+
+class Toy(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    dogs = models.ManyToManyField(Dog, related_name="toys")

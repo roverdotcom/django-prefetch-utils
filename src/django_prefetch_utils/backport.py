@@ -19,7 +19,6 @@ def prefetch_related_objects(model_instances, *related_lookups):
     done_queries = {}  # dictionary of things like 'foo__bar': [results]
 
     auto_lookups = set()  # we add to this as we go through.
-    followed_descriptors = set()  # recursion protection
 
     all_lookups = normalize_prefetch_lookups(reversed(related_lookups))
     while all_lookups:
@@ -32,7 +31,7 @@ def prefetch_related_objects(model_instances, *related_lookups):
                     % lookup.prefetch_to
                 )
 
-            continue
+            continue  # pragma: no cover
 
         # Top level, the list of objects to decorate is the result cache
         # from the primary QuerySet. It won't be for deeper levels.
@@ -105,22 +104,12 @@ def prefetch_related_objects(model_instances, *related_lookups):
                 obj_list, additional_lookups = prefetch_one_level(
                     obj_list, prefetcher, lookup, level
                 )
-                # We need to ensure we don't keep adding lookups from the
-                # same relationships to stop infinite recursion. So, if we
-                # are already on an automatically added lookup, don't add
-                # the new lookups from relationships we've seen already.
-                if not (
-                    prefetch_to in done_queries
-                    and lookup in auto_lookups
-                    and descriptor in followed_descriptors
-                ):
-                    done_queries[prefetch_to] = obj_list
-                    new_lookups = normalize_prefetch_lookups(
-                        reversed(additional_lookups), prefetch_to
-                    )
-                    auto_lookups.update(new_lookups)
-                    all_lookups.extend(new_lookups)
-                followed_descriptors.add(descriptor)
+                done_queries[prefetch_to] = obj_list
+                new_lookups = normalize_prefetch_lookups(
+                    reversed(additional_lookups), prefetch_to
+                )
+                auto_lookups.update(new_lookups)
+                all_lookups.extend(new_lookups)
             else:
                 # Either a singly related object that has already been fetched
                 # (e.g. via select_related), or hopefully some other property
