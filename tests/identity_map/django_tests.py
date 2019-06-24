@@ -4,9 +4,11 @@ from importlib import import_module
 
 from django.db.models import Prefetch
 from django.test import TestCase
+from prefetch_related.models import Bookmark
 from prefetch_related.models import Employee
 from prefetch_related.models import House
 from prefetch_related.models import Person
+from prefetch_related.models import TaggedItem
 from prefetch_related.tests import CustomPrefetchTests
 from prefetch_related.tests import NullableTest
 
@@ -72,6 +74,30 @@ class IdentityMapCustomPrefetchTests(EnableIdentityMapMixin, CustomPrefetchTests
                     'all_houses__occupants_lst__houses',
                 ),
                 [['all_houses', 'occupants_lst', 'houses']]
+            )
+        self.assertEqual(lst1, lst2)
+
+    def test_generic_rel(self):
+        bookmark = Bookmark.objects.create(url='http://www.djangoproject.com/')
+        TaggedItem.objects.create(content_object=bookmark, tag='django')
+        TaggedItem.objects.create(content_object=bookmark, favorite=bookmark, tag='python')
+
+        # Control lookups.
+        with self.assertNumQueries(3):
+            lst1 = self.traverse_qs(
+                Bookmark.objects.prefetch_related('tags', 'tags__content_object', 'favorite_tags'),
+                [['tags', 'content_object'], ['favorite_tags']]
+            )
+
+        # Test lookups.
+        with self.assertNumQueries(3):
+            lst2 = self.traverse_qs(
+                Bookmark.objects.prefetch_related(
+                    Prefetch('tags', to_attr='tags_lst'),
+                    Prefetch('tags_lst__content_object'),
+                    Prefetch('favorite_tags'),
+                ),
+                [['tags_lst', 'content_object'], ['favorite_tags']]
             )
         self.assertEqual(lst1, lst2)
 

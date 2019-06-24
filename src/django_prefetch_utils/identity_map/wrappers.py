@@ -101,7 +101,7 @@ class IdentityMapPrefetchQuerySetWrapper(IdentityMapObjectProxy):
 
 
 class ForwardDescriptorPrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrapper):
-    __slots__ = ("_self_field", "_self_instances_dict", "_self_suffix")
+    __slots__ = ("_self_field", "_self_instances_dict", "_self_prefix")
 
     def __init__(self, identity_map, field, instances_dict, prefix, queryset):
         super(ForwardDescriptorPrefetchQuerySetWrapper, self).__init__(
@@ -113,11 +113,17 @@ class ForwardDescriptorPrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrappe
 
     def __iter__(self):
         all_related_objects = itertools.chain(self._self_prefix, self.__wrapped__)
+
+        # If the associated field is not one-to-one, then we can't set any
+        # cached values on the related objects as we may not have fetched
+        # all of them.
         if self._self_field.remote_field.multiple:
             for rel_obj in all_related_objects:
                 yield self._self_identity_map[rel_obj]
             return
 
+        # If the associated field is one-to-one, then we can set the cached
+        # value on the related object for the reverse relation
         rel_obj_attr = self._self_field.get_foreign_related_value
         rel_obj_cache_name = self._self_field.remote_field.get_cache_name()
         for rel_obj in all_related_objects:
@@ -139,7 +145,9 @@ class ForwardDescriptorPrefetchWrapper(IdentityMapObjectProxy):
         related_field = self.field.foreign_related_fields[0]
 
         # Go through and find any instance which may already have their
-        # related object already in the identity map.
+        # related object already in the identity map.  If there are annotations,
+        # then we need to perform the query to get the annotation values even
+        # if we've already fetched the underlying object.
         if (
             len(self.field.foreign_related_fields) == 1
             and not queryset.query.annotations
@@ -358,3 +366,58 @@ class ManyToManyRelatedManagerWrapper(IdentityMapObjectProxy):
             self._self_identity_map, rel_qs, rel_obj_attr
         )
         return (rel_qs_wrapper, rel_qs_wrapper.rel_obj_attr) + prefetch_tuple[2:]
+
+
+class GenericForeignKeyPrefetchWrapper(IdentityMapObjectProxy):
+    def get_prefetch_queryset(self, instances, queryset=None):
+        ct_attname = self.model._meta.get_field(self.ct_field).get_attname()
+
+        # Go through and check for instances which may have already their
+        # content_object fetched.
+        prefix = []  # list of already fetched related objects
+        new_instances = []  # list of instances whose related objects need fetching
+        for instance in instances:
+            # Determine the content type for the generic foreign key
+            ct_id = getattr(instance, ct_attname)
+            if ct_id is None:
+                continue
+
+            ct = self.get_content_type(id=ct_id)  # todo: do we need "using" here?
+            model = ct.model_class()
+
+            # Check to see the corresponding object is in the identity map
+            fk_val = getattr(instance, self.fk_field)
+            sub_identity_map = self._self_identity_map.get_map_for_model(model)
+            rel_obj = sub_identity_map.get(fk_val)
+
+            if rel_obj is not None:
+                prefix.append(rel_obj)
+            else:
+                new_instances.append(instance)
+
+        # We can use the underlying get_prefetch_queryset method since
+        # it doesn't manipulate new_instances or any of the related objects
+        prefetch_data = self.__wrapped__.get_prefetch_queryset(new_instances, queryset)
+        queryset = GenericForeignKeyPrefetchQuerySetWrapper(
+            self._self_identity_map, prefix, prefetch_data[0]
+        )
+        return (queryset,) + prefetch_data[1:]
+
+
+class GenericForeignKeyPrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrapper):
+    """
+    This wrapper yields the contents of :attr:`_self_prefix` before yielding
+    the contents of the wrapped object.
+    """
+    __slots__ = ("_self_prefix",)
+
+    def __init__(self, identity_map, prefix, queryset):
+        super(GenericForeignKeyPrefetchQuerySetWrapper, self).__init__(
+            identity_map, queryset
+        )
+        self._self_prefix = prefix
+
+    def __iter__(self):
+        all_related_objects = itertools.chain(self._self_prefix, self.__wrapped__)
+        for rel_obj in all_related_objects:
+            yield self._self_identity_map[rel_obj]

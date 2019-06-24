@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import copy
 
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.core import exceptions
 from django.db.models import Manager
 from django.db.models.constants import LOOKUP_SEP
@@ -21,6 +22,7 @@ from django_prefetch_utils.selector import override_prefetch_related_objects
 
 from .maps import PrefetchIdentityMap
 from .wrappers import ForwardDescriptorPrefetchWrapper
+from .wrappers import GenericForeignKeyPrefetchWrapper
 from .wrappers import IdentityMapPrefetcher
 from .wrappers import ManyToManyRelatedManagerWrapper
 from .wrappers import ReverseManyToOneDescriptorPrefetchWrapper
@@ -37,6 +39,7 @@ def get_identity_map_prefetcher(identity_map, descriptor, prefetcher):
         ReverseOneToOneDescriptor: ReverseOneToOneDescriptorPrefetchWrapper,
         ReverseManyToOneDescriptor: ReverseManyToOneDescriptorPrefetchWrapper,
         ManyToManyDescriptor: ManyToManyRelatedManagerWrapper,
+        GenericForeignKey: GenericForeignKeyPrefetchWrapper,
       }
     wrapper_cls = wrappers.get(type(descriptor), IdentityMapPrefetcher)
     return wrapper_cls(identity_map, prefetcher)

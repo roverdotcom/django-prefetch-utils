@@ -247,8 +247,14 @@ class GenericForeignKeyTests(EnableIdentityMapMixin, TestCase):
     def setUpTestData(cls):
         cls.person = Person.objects.create(name='Jane')
         cls.bookmark = Bookmark.objects.create(url='https://www.rover.com')
+        cls.bookmark2 = Bookmark.objects.create(url='https://www.rover.com/blog/')
         cls.tagged_item = TaggedItem.objects.create(
             content_object=cls.bookmark,
+            created_by=cls.person,
+            favorite=cls.person,
+        )
+        cls.tagged_item2 = TaggedItem.objects.create(
+            content_object=cls.bookmark2,
             created_by=cls.person,
             favorite=cls.person,
         )
@@ -256,11 +262,18 @@ class GenericForeignKeyTests(EnableIdentityMapMixin, TestCase):
     @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_identity_map_works_with_generic_foreign_keys(self, identity_map):
         bookmark = identity_map[Bookmark.objects.first()]
-        tagged_item = TaggedItem.objects.prefetch_related(
-            'content_object'
-        ).first()
-        with self.assertNumQueries(0):
+        with self.assertNumQueries(1):
+            tagged_item = TaggedItem.objects.prefetch_related(
+                'content_object'
+            ).first()
             self.assertIs(tagged_item.content_object, bookmark)
+
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
+    def test_identity_map_works_with_partially_fetched(self, identity_map):
+        bookmark = identity_map[Bookmark.objects.first()]
+        with self.assertNumQueries(2):
+            tagged_items = list(TaggedItem.objects.prefetch_related('content_object'))
+            self.assertIs(tagged_items[0].content_object, bookmark)
 
 
 class GenericRelationTests(EnableIdentityMapMixin, TestCase):
@@ -275,7 +288,7 @@ class GenericRelationTests(EnableIdentityMapMixin, TestCase):
         )
 
     def test_reverse_is_correctly_set(self):
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(2):
             bookmark = Bookmark.objects.prefetch_related(
                 'tags__content_object'
             ).first()
