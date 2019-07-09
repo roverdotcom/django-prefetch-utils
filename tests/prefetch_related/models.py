@@ -1,11 +1,11 @@
 import uuid
 
-from django.contrib.contenttypes.fields import (
-    GenericForeignKey, GenericRelation,
-)
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models.query import ModelIterable, QuerySet
+from django.db.models.query import ModelIterable
+from django.db.models.query import QuerySet
 from django.utils.functional import cached_property
 from future.builtins import super
 

@@ -1,20 +1,40 @@
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
-from django.db.models import Prefetch, QuerySet
-from django.db.models.query import get_prefetcher, prefetch_related_objects
-from django.test import TestCase, override_settings
+from django.db.models import Prefetch
+from django.db.models import QuerySet
+from django.db.models.query import get_prefetcher
+from django.db.models.query import prefetch_related_objects
+from django.test import TestCase
+from django.test import override_settings
 from django.test.utils import CaptureQueriesContext
 from pyenv_markers import requires_django_2_0
 from pyenv_markers import requires_django_2_1
 from pyenv_markers import requires_django_2_2
 
-from .models import (
-    Author, Author2, AuthorAddress, AuthorWithAge, Bio, Book, Bookmark,
-    BookReview, BookWithYear, Comment, Department, Employee, FavoriteAuthors,
-    House, LessonEntry, ModelIterableSubclass, Person, Qualification, Reader,
-    Room, TaggedItem, Teacher, WordEntry,
-)
+from .models import Author
+from .models import Author2
+from .models import AuthorAddress
+from .models import AuthorWithAge
+from .models import Bio
+from .models import Book
+from .models import Bookmark
+from .models import BookReview
+from .models import BookWithYear
+from .models import Comment
+from .models import Department
+from .models import Employee
+from .models import FavoriteAuthors
+from .models import House
+from .models import LessonEntry
+from .models import ModelIterableSubclass
+from .models import Person
+from .models import Qualification
+from .models import Reader
+from .models import Room
+from .models import TaggedItem
+from .models import Teacher
+from .models import WordEntry
 
 
 class TestDataMixin:

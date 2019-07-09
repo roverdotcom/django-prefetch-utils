@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 from importlib import import_module
 
-from django.db.models import Prefetch
 from django.test import TestCase
 from prefetch_related.models import Author
 from prefetch_related.models import Book

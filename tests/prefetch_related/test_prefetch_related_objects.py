@@ -1,7 +1,10 @@
-from django.db.models import Prefetch, prefetch_related_objects
+from django.db.models import Prefetch
+from django.db.models import prefetch_related_objects
 from django.test import TestCase
 
-from .models import Author, Book, Reader
+from .models import Author
+from .models import Book
+from .models import Reader
 
 
 class PrefetchRelatedObjectsTests(TestCase):

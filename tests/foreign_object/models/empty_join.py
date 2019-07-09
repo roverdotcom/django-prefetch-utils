@@ -1,7 +1,6 @@
 from django.db import models
-from django.db.models.fields.related import (
-    ForeignObjectRel, ReverseManyToOneDescriptor,
-)
+from django.db.models.fields.related import ForeignObjectRel
+from django.db.models.fields.related import ReverseManyToOneDescriptor
 from django.db.models.lookups import StartsWith
 from django.db.models.query_utils import PathInfo
 

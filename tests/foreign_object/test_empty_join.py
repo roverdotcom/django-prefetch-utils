@@ -1,5 +1,4 @@
 from django.test import TestCase
-
 from pyenv_markers import requires_django_2_0
 
 from .models import SlugPage

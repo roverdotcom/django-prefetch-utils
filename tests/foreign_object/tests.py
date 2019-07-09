@@ -5,16 +5,23 @@ import django
 from django.core.exceptions import FieldError
 from django.db import models
 from django.db.models.fields.related import ForeignObject
-from django.test import SimpleTestCase, TestCase, skipUnlessDBFeature
+from django.test import SimpleTestCase
+from django.test import TestCase
+from django.test import skipUnlessDBFeature
 from django.test.utils import isolate_apps
 from django.utils import translation
-
 from pyenv_markers import requires_django_2_2
 
-from .models import (
-    Article, ArticleIdea, ArticleTag, ArticleTranslation, Country, Friendship,
-    Group, Membership, NewsArticle, Person,
-)
+from .models import Article
+from .models import ArticleIdea
+from .models import ArticleTag
+from .models import ArticleTranslation
+from .models import Country
+from .models import Friendship
+from .models import Group
+from .models import Membership
+from .models import NewsArticle
+from .models import Person
 
 # Note that these tests are testing internal implementation details.
 # ForeignObject is not part of public API.

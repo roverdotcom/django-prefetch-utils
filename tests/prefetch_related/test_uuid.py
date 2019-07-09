@@ -1,6 +1,10 @@
 from django.test import TestCase
 
-from .models import Flea, House, Person, Pet, Room
+from .models import Flea
+from .models import House
+from .models import Person
+from .models import Pet
+from .models import Room
 
 
 class UUIDPrefetchRelated(TestCase):

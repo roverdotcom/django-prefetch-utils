@@ -10,9 +10,7 @@ from __future__ import unicode_literals
 import threading
 
 import django.db.models.query
-from django.db.models.query import (
-    prefetch_related_objects as original_prefetch_related_objects
-)
+from django.db.models.query import prefetch_related_objects as original_prefetch_related_objects
 from django.utils.decorators import ContextDecorator
 
 _active = threading.local()

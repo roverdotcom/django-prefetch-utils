@@ -2,7 +2,9 @@ from operator import attrgetter
 
 from django.test.testcases import TestCase
 
-from .models import Address, Contact, Customer
+from .models import Address
+from .models import Contact
+from .models import Customer
 
 
 class TestLookupQuery(TestCase):
