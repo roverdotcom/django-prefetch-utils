@@ -20,19 +20,21 @@ def wrap_identity_map_for_queryset(identity_map, rel_qs):
     if query is None:
         return identity_map
 
+    # If the queryset has any select_related, then we need go through and
+    # make sure that they get added to any of the instances that already
+    # exist in the identity map.
+    # Since select_related can recursively put things into the identity
+    # map, we put this at the lowest layer of the wrapping.
+    select_related = getattr(query, "select_related", None)
+    if select_related:
+        identity_map = SelectRelatedIdentityMap(dict(select_related), identity_map)
+
     # If the queryset has annotations, then we'll need to make sure
     # they get applied to any of the instances that already exist
     # in the identity map.
     annotations = getattr(query, "annotations", None)
     if annotations:
         identity_map = AnnotatingIdentityMap(set(annotations), identity_map)
-
-    # If the queryset has any select_related, then we need go through and
-    # make sure that they get added to any of the instances that already
-    # exist in the identity map
-    select_related = getattr(query, "select_related", None)
-    if select_related:
-        identity_map = SelectRelatedIdentityMap(dict(select_related), identity_map)
 
     # If the queryset has any "extra" columns, then we need go through and
     # make sure that they get added to any of the instances that already
