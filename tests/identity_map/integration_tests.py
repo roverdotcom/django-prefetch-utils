@@ -1,3 +1,4 @@
+import django
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import F
 from django.db.models import Prefetch
@@ -53,12 +54,13 @@ class ForwardDescriptorTestsMixin(EnableIdentityMapMixin):
         # Test that annotations from Prefetch.queryset are applied even
         # if the prefetched object already exists in the identity map
         author = identity_map[Author.objects.first()]
-        bio = self.bio_class.objects.prefetch_related(
-            Prefetch(
-                'author',
-                queryset=Author.objects.annotate(double_id=2 * F('id'))
-            )
-        ).first()
+        with self.assertNumQueries(2):
+            bio = self.bio_class.objects.prefetch_related(
+                Prefetch(
+                    'author',
+                    queryset=Author.objects.annotate(double_id=2 * F('id'))
+                )
+            ).first()
         self.assertIs(bio.author, author)
         self.assertEqual(bio.author.double_id, 2 * author.id)
 
@@ -67,12 +69,13 @@ class ForwardDescriptorTestsMixin(EnableIdentityMapMixin):
         # Test that annotations from Prefetch.queryset are applied even
         # if the prefetched object already exists in the identity map
         author = identity_map[Author.objects.first()]
-        bio = self.bio_class.objects.prefetch_related(
-            Prefetch(
-                'author',
-                queryset=Author.objects.select_related('first_book')
-            )
-        ).first()
+        with self.assertNumQueries(2):
+            bio = self.bio_class.objects.prefetch_related(
+                Prefetch(
+                    'author',
+                    queryset=Author.objects.select_related('first_book')
+                )
+            ).first()
 
         # Check to make sure that the author is the one in the identity
         # map and that that it has the select_related object
@@ -323,3 +326,29 @@ class GenericRelationTests(EnableIdentityMapMixin, TestCase):
                 tagged_item.favorite_ct,
                 ContentType.objects.get_for_model(Person)
             )
+
+
+class SelectRelatedTests(EnableIdentityMapMixin, TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.book = Book.objects.create(title="Poems")
+        cls.jane = Author.objects.create(name="Jane", first_book=cls.book)
+
+    @use_persistent_prefetch_identity_map(pass_identity_map=True)
+    def test_select_related_with_null_reverse_one_to_one(self, identity_map):
+        jane = identity_map[self.jane]
+        with self.assertNumQueries(2):
+            book = Book.objects.prefetch_related(
+                Prefetch(
+                    'first_time_authors',
+                    queryset=Author.objects.select_related('bio')
+                )
+            ).first()
+
+        bio_field = Author._meta.get_field('bio')
+        with self.assertNumQueries(0):
+            self.assertIs(book.first_time_authors.all()[0], jane)
+            if django.VERSION < (2, 0):
+                self.assertIsNone(getattr(jane, bio_field.get_cache_name()))
+            else:
+                self.assertIsNone(bio_field.get_cached_value(jane))
