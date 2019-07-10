@@ -12,7 +12,7 @@ matrix:
   include:
 {%- for env, config in tox_environments|dictsort %}{{ '' }}
     - python: '{{ env.split("-")[0] if env.startswith("pypy") else "{0[2]}.{0[3]}".format(env) }}'
-{% if env.startswith('py37') %}
+{% if env.startswith('py37') or env.startswith('py36') %}
       dist: xenial
       sudo: required
 {% endif %}
