@@ -24,7 +24,8 @@ original_fetch_all = QuerySet._fetch_all
 
 class FetchAllDescriptor(object):
     """
-    This descriptor is to
+    This descriptor replaces ``QuerySet._fetch_all`` and applies
+    an identity map to any objects fetched in a queryset.
     """
     def __get__(self, queryset, type=None):
         if queryset is None:
@@ -46,14 +47,36 @@ class FetchAllDescriptor(object):
 
 
 def enable_fetch_all_descriptor():
+    """
+    Replaces ``QuerySet._fetch_all`` with an instance of
+    :class:`FetchAllDescriptor`.
+    """
     QuerySet._fetch_all = FetchAllDescriptor()
 
 
 def disable_fetch_all_descriptor():
+    """
+    Sets ``QuerySet._fetch_all`` to be the original method.
+    """
     QuerySet._fetch_all = original_fetch_all
 
 
 class use_persistent_prefetch_identity_map(ContextDecorator):
+    """
+    A context decorator which allows the same identity map to be used
+    across multiple calls to ``prefetch_related_objects``.
+
+    ::
+
+       with use_persistent_prefetch_identity_map():
+           dogs = list(Dogs.objects.prefetch_related("toys"))
+
+           # The toy.dog instances will be identitical (not just equal)
+           # to the ones fetched on the line above
+           with self.assertNumQueries(1):
+               toys = list(Toy.objects.prefetch_related("dog"))
+
+    """
     previous_active = None
     override_context_decorator = None
 

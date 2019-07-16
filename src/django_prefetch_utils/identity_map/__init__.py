@@ -47,13 +47,15 @@ def get_identity_map_prefetcher(identity_map, descriptor, prefetcher):
 
 def get_prefetcher(obj_list, through_attr, to_attr):
     """
-    For the attribute 'through_attr' on the given instance, finds
-    an object that has a get_prefetch_queryset().
+    For the attribute *through_attr* on the given instance, finds
+    an object that has a ``get_prefetch_queryset()``.
+
     Returns a 4 tuple containing:
-    (the object with get_prefetch_queryset (or None),
-     the descriptor object representing this relationship (or None),
-     a boolean that is False if the attribute was not found at all,
-     a boolean that is True if the attribute has already been fetched)
+
+       - (the object with get_prefetch_queryset (or None),
+       - the descriptor object representing this relationship (or None),
+       - a boolean that is False if the attribute was not found at all,
+       - a list of the subset of *obj_list* that requires fetching
     """
     instance = obj_list[0]
     prefetcher = None
@@ -105,6 +107,13 @@ def get_prefetcher(obj_list, through_attr, to_attr):
 
 
 def get_prefetched_objects_from_list(obj_list, through_attr):
+    """
+    Returns all of the related objects in *obj_list* from *through_attr*.
+
+    :type obj_list: list
+    :type through_attr: str
+    :rtype: list
+    """
     new_obj_list = []
     for obj in obj_list:
         if through_attr in getattr(obj, "_prefetched_objects_cache", ()):
@@ -135,13 +144,29 @@ def get_prefetched_objects_from_list(obj_list, through_attr):
 
 def get_default_prefetch_identity_map():
     """
-    Returns a empty default identity map for use during prefetching.
+    Returns an empty default identity map for use during prefetching.
+
+    :rtype: :class:`django_prefetch_utils.identity_map.maps.PrefetchIdentityMap`
     """
     return PrefetchIdentityMap()
 
 
 def prefetch_related_objects(*args, **kwargs):
     """
+    Calls :func:`prefetch_related_objects_impl` with a new identity map
+    from :func:`get_default_prefetch_identity_map`::
+
+        >>> from django_prefetch_utils.identity_map import prefetch_related_objects
+        >>> dogs = list(Dogs.objectss.all())
+        >>> prefetch_related_objects(dogs, 'toys')
+
+    .. note::
+
+       This will create will not preserve the identity map across
+       different calls to ``prefetched_related_objects``.  For that,
+       you need to use
+       :func:`django_prefetch_utils.identity_map.persistent.use_persistent_prefetch_identity_map`
+
     """
     return prefetch_related_objects_impl(
         get_default_prefetch_identity_map(),
@@ -153,7 +178,10 @@ def prefetch_related_objects(*args, **kwargs):
 def use_prefetch_identity_map():
     """
     A context decorator which enables the identity map version of
-    ``prefetch_related_objects``.
+    ``prefetch_related_objects``::
+
+        with use_prefetch_identity_map():
+            dogs = list(Dogs.objects.prefetch_related('toys'))
 
     .. note::
 
@@ -165,8 +193,9 @@ def use_prefetch_identity_map():
 
 def prefetch_related_objects_impl(identity_map, model_instances, *related_lookups):
     """
-    Populate prefetched object caches for a list of model instances based on
-    the lookups/Prefetch instances given.
+    An implementation of ``prefetch_related_objects`` which makes use
+    of *identity_map* to keep track of all of the objects which have been
+    fetched and reuses them where possible.
     """
     if not model_instances:
         return  # nothing to do

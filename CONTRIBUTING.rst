@@ -17,8 +17,8 @@ When `reporting a bug <https://github.com/roverdotcom/django-prefetch-utils/issu
 Documentation improvements
 ==========================
 
-Django Prefetch Utils could always use more documentation, whether as part of the
-official Django Prefetch Utils docs, in docstrings, or even on the web in blog posts,
+`django-prefetch-utils` could always use more documentation, whether as part of the
+official `django-prefetch-utils` docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 Feature requests and feedback

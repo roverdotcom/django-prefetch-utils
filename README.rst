@@ -52,7 +52,16 @@ Overview
 
 .. end-badges
 
-An example package. Generated with cookiecutter-pylibrary.
+A library of utitlies work working with and building on top of
+Django's ``prefetch_related`` system.  It currently consists of the
+following components:
+
+   - ``selector``: utilities which let you override the implementation of
+     ``prefetch_related`` either by default or with a context decorator.
+
+   - ``identity_map``: a reimplementation of Django's ``prefetch_related_objects``
+     which keeps track of the object already fetched and reuses them.
+
 
 * Free software: BSD 3-Clause License
 
@@ -68,28 +77,3 @@ Documentation
 
 
 https://django-prefetch-utils.readthedocs.io/
-
-
-Development
-===========
-
-To run the all tests run::
-
-    tox
-
-Note, to combine the coverage data from all the tox environments run:
-
-.. list-table::
-    :widths: 10 90
-    :stub-columns: 1
-
-    - - Windows
-      - ::
-
-            set PYTEST_ADDOPTS=--cov-append
-            tox
-
-    - - Other
-      - ::
-
-            PYTEST_ADDOPTS=--cov-append tox
