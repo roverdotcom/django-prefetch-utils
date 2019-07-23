@@ -15,14 +15,14 @@ One benefit of Django's ``prefetch_related`` system vs. ``select_related`` is
 that for the same prefetch lookup, equal model instances are identical.
 For example::
 
-  >>> toy1, toy2 = Toy.objects.prefetch_related("dog")
-  >>> toy1.dog == toy2.dog
-  True
-  >>> toy1.dog is toy2.dog
-  True
-  >>> toy1, toy2 = Toy.objects.select_related("dog")
-  >>> toy1.dog is toy2.dog
-  False
+   >>> toy1, toy2 = Toy.objects.prefetch_related("dog")
+   >>> toy1.dog == toy2.dog
+   True
+   >>> toy1.dog is toy2.dog
+   True
+   >>> toy1, toy2 = Toy.objects.select_related("dog")
+   >>> toy1.dog is toy2.dog
+   False
 
 If for example, there is a ``cached_property`` on a the ``Dog`` model, then
 that would end up being shared by both ``Toy`` instances.
@@ -34,7 +34,8 @@ Now, consider a model like::
        favorite_toy = models.ForeignKey(Toy, null=True)
 
 If we prefetch the toys and favorite toy, there will be two ``Toy``
-objects which are equal but not identical::
+objects which are equal but not identical.  We get the following behavior
+with Django's default implementation::
 
    >>> dog = Dog.objects.prefetch_related("toys", "favorite_toy")[0]
    >>> only_toy = dog.toys.all()[0]
@@ -43,8 +44,10 @@ objects which are equal but not identical::
    >>> only_toy is dog.favorite_toy
    False
 
-The identity map implementation addresses this by keeping track of
-all of the objects fetched during the process and reusing them so that::
+The identity map implementation keeps track of all of the objects fetched
+during the the process so that it can reuse them when possible .  If we
+were to run the same code as above with the identity map implementation,
+we would have::
 
    >>> only_toy is dog.favorite_toy
    True
