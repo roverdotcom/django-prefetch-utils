@@ -1,6 +1,36 @@
 """
-This module provides a way to customize which implementation of
-``prefetch_related_objects`` is used.
+This module provides utilities for changing the implementation of
+``prefetch_related_objects`` that Django uses.  In order for these to
+work, :func:`enable_fetch_related_objects_selector` must be called.
+This will be done in ``AppConfig.ready`` if ``django_prefetch_utils``
+is added to ``INSTALLED_APPS``.
+
+Once that has been called, then
+:func:`set_default_prefetch_related_objects` can be called to override
+the default implementation globally::
+
+    from django_prefetch_related.selector import set_default_prefetch_related_objects
+    from django_prefetch_utils.identity_map import prefetch_related_objects
+
+    set_default_prefetch_related_objects(prefetch_related_objects)
+
+This will be done as part of ``AppConfig.ready`` if the
+``PREFETCH_UTILS_DEFAULT_IMPLEMENTATION`` setting is provided.
+
+To change the implementation used on a local basis, the
+:func:`override_prefetch_related_objects` or
+:func:`use_original_prefetch_related_objects` context decorators can
+be used::
+
+    from django_prefetch_utils.identity_map import prefetch_related_objects
+
+    @use_original_prefetch_related_objects()
+    def some_function():
+        dogs = list(Dog.objects.all())  # uses Django's implementation
+
+        with override_prefetch_related_objects(prefetch_related_objects):
+            toys = list(Toy.objects.all)  # uses identity map implementation
+
 """
 from __future__ import absolute_import
 from __future__ import division

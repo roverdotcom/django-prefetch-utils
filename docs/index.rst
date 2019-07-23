@@ -5,7 +5,7 @@
    self
    getting_started
    usage
-   motivation
+   identity_map_comparison
    reference/index
    contributing
    authors

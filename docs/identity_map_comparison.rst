@@ -1,10 +1,12 @@
 ==========
-Motivation
+Comparison
 ==========
 
-------------
-Identity Map
-------------
+The
+:func:`django_prefetch_utils.identity_map.prefetch_related_objects`
+implementation provides a number of benefits over Django's default
+implementation.
+
 
 Database query reduction
 ------------------------
@@ -31,26 +33,25 @@ Now, consider a model like::
        toys = models.ManyToManyField(Toy)
        favorite_toy = models.ForeignKey(Toy, null=True)
 
-Now, if we prefetch the toys and favorite toy, there will be two equal ``Toy``
-objects which are not identical::
+If we prefetch the toys and favorite toy, there will be two ``Toy``
+objects which are equal but not identical::
 
-   >>> dog, = Dog.objects.prefetch_related("toys", "favorite_toy")
-   >>> only_toy, = dog.toys.all()
+   >>> dog = Dog.objects.prefetch_related("toys", "favorite_toy")[0]
+   >>> only_toy = dog.toys.all()[0]
    >>> only_toy == dog.favorite_toy
    True
    >>> only_toy is dog.favorite_toy
    False
 
-The implementation of ``prefetch_related_objects`` in
-``django_prefetch_utils.identity_map`` addresses this by keeping track of
+The identity map implementation addresses this by keeping track of
 all of the objects fetched during the process and reusing them so that::
 
-  >>> only_toy is dog.favorite_toy
-  True
+   >>> only_toy is dog.favorite_toy
+   True
 
 Additionally, since ``favorite_toy`` was already fetched when ``toys`` was
-prefetched, **less database queries are done**.  The same prefetching is
-executed with 2 queries instead of 3.
+prefetched, **less database queries are done**.  The same code is
+executed with 2 database queries instead of 3.
 
 Prefetch composition
 --------------------
@@ -62,9 +63,9 @@ For example::
     >>> toy_qs = Toy.objects.prefetch_related(
     ...     Prefetch("dog", queryset=Dog.objects.prefetch_related("owner"))
     ... )
-    >>> dog, = Dog.objects.prefetch_related(
+    >>> dog = Dog.objects.prefetch_related(
     ...     Prefetch("toy_set", queryset=toy_qs)
-    ... )
+    ... )[0]
     >>> toy = dog.toy_set.all()[0]
     >>> toy.dog is dog
     True
@@ -74,7 +75,7 @@ it looks like we requested that it be prefetched.  This happens
 because when the ``dog`` object is already set by the reverse relation
 when ``toy_set__dog`` is prefetched.  Therefore, the
 ``Dog.objects.prefetch_related("owner")`` queryset is never taken into
-account.  This makes it difficult programatically compose querysets
+account.  This makes it difficult programmatically compose querysets
 with prefetches inside other ``Prefetch`` objects.
 
 :func:`django_prefetch_utils.identity_map.prefetch_related_objects` is

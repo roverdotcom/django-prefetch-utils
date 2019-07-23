@@ -52,15 +52,34 @@ Overview
 
 .. end-badges
 
-A library of utitlies work working with and building on top of
-Django's ``prefetch_related`` system.  It currently consists of the
-following components:
+This library currently provides a replacement implementation of
+``prefetch_related_objects`` which uses an `identity map
+<https://en.wikipedia.org/wiki/Identity_map_pattern>`_ to
+automatically reduce the number of queries performed when prefetching.
 
-   - ``selector``: utilities which let you override the implementation of
-     ``prefetch_related`` either by default or with a context decorator.
+For example, considered the following data model::
 
-   - ``identity_map``: a reimplementation of Django's ``prefetch_related_objects``
-     which keeps track of the object already fetched and reuses them.
+   class Toy(models.Model):
+       dog = models.ForeignKey('dogs.Dog')
+
+   class Dog(models.Model):
+       name = models.CharField()
+       favorite_toy = models.ForeignKey('toys.Toy', null=True)
+
+
+With this library, we get don't need to do a database query to
+perform the prefetch for ``favorite_toy`` since that object
+had already been fetched as part of the prefetching for ``toy_set``::
+
+   >>> dog = Dog.objects.prefetch_related('toys', 'favorite_toy')[0]
+   SELECT * from dogs_dog limit 1;
+   SELECT * FROM toys_toy where toys_toy.dog_id IN (1);
+   >>> dog.favorite_toy is dog.toy_set.all()[0]  # no queries done
+   True
+
+
+The plan is to increase the scope of the library in future versions to
+provide additional tools for working with ``prefetch_related``.
 
 
 * Free software: BSD 3-Clause License

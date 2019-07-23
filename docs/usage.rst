@@ -2,63 +2,65 @@
 Usage
 =====
 
---------
-Selector
---------
+The
+:func:`django_prefetch_utils.identity_map.prefetch_related_objects`
+implementation use an `identity map
+<https://en.wikipedia.org/wiki/Identity_map_pattern>`_ to provide a
+number of benefits over Django's default.  See
+:doc:`./identity_map_comparison` for a discussion of the
+improvements. It should be a drop-in replacement, requiring no changes
+of user code.
 
-:mod:`django_prefetch_utils.selector` provides utilities for changing the
-implementation of ``prefetch_related_objects`` that Django uses.  In order
-for these to work,
-:func:`~django_prefetch_utils.selector.enable_fetch_related_objects_selector`
-must be called.  This will be done in ``AppConfig.ready`` if
-``django_prefetch_utils`` is added to ``INSTALLED_APPS``.
+.. contents::
+   :local:
+   :depth: 1
 
-Once that has been called, then
-:func:`~django_prefetch_utils.selector.set_default_prefetch_related_objects`
-can be called to override the default implementation globally::
 
-    from django_prefetch_related.selector import set_default_prefetch_related_objects
-    from django_prefetch_utils.identity_map import prefetch_related_objects
+.. _identity_map_global:
 
-    set_default_prefetch_related_objects(prefetch_related_objects)
+Using the identity map globally
+-------------------------------
 
-This will be done as part of ``AppConfig.ready`` if the
-``PREFETCH_UTILS_DEFAULT_IMPLEMENTATION`` setting is provided.
+The easiest way to use the identity map implementation is to set the
+``PREFETCH_UTILS_DEFAULT_IMPLEMENTATION`` setting::
 
-To change the implementation used on a local basis, the
-:func:`~django_prefetch_utils.selector.override_prefetch_related_objects`
-or
-:func:`~django_prefetch_utils.selector.use_original_prefetch_related_objects`
-context decorators can be used::
+   PREFETCH_UTILS_DEFAULT_IMPLEMENTATION = (
+       'django_prefetch_utils.identity_map.prefetch_related_objects'
+   )
 
-    from django_prefetch_utils.identity_map import prefetch_related_objects
+This will make it so that all calls to
+:mod:`django.db.models.query.prefetch_related_objects` will use the
+identity map implementation.
+
+If at any point you which to use Django's default implementation, you can use
+the :func:`~django_prefetch_utils.selector.use_original_prefetch_related_objects`
+context decorator::
+
+    from from django_prefetch_utils.selector import use_original_prefetch_related_objects
 
     @use_original_prefetch_related_objects()
     def some_function():
-        dogs = list(Dog.objects.all())  # done using Django's implementation
+        return Dog.objects.prefetch_related("toys")[0]  # uses default impl.
 
-        with override_prefetch_related_objects(prefetch_related_objects):
-            toys = list(Toy.objects.all)  # done using identity map implementation
 
-        ...
-
-------------
-Identity Map
-------------
+Using the identity map locally
+------------------------------
 
 The
-:func:`django_prefetch_utils.identity_map.prefetch_related_objects`
-implementation provides a number of benefits over Django's default.
-See :doc:`./motivation` for a discussion of the improvements.
+:func:`~django_prefetch_utils.identity_map.use_prefetch_identity_map`
+context decorator can be used if you want to use identity map
+implementation without using it :ref:`globally
+<identity_map_global>`::
 
-It should be a drop-in replacement, requiring no changes of user code.
-You can use the selector in the previous section to use it by default or
-on a case by case basis.
+   @use_prefetch_identity_map()
+   def some_function():
+       return Dog.objects.prefetch_related('toys')[0]  # uses identity map impl.
 
-Persistent identity map
------------------------
 
-There may be times wher you want to use the same identity map across
+Persisting the identity map across calls
+----------------------------------------
+
+There may be times where you want to use the same identity map across
 different calls to ``prefetch_related_objects``.  In that case, you
 can use the
 :func:`~django_prefetch_utils.identity_map.persistent.use_persistent_prefetch_identity_map`::
@@ -78,7 +80,7 @@ It can also be used as a decorator::
     def some_function():
         dogs = list(Dogs.objects.prefetch_related("toys"))
 
-        # The toy.dog instances will be identitical (not just equal)
+        # The toy.dog instances will be identical (not just equal)
         # to the ones fetched on the line above
         toys = list(Toy.objects.prefetch_related("dog"))
         ...
