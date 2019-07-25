@@ -376,3 +376,30 @@ class SelectRelatedTests(EnableIdentityMapMixin, TestCase):
             self.assertIs(book.authors.all()[0], jane)
             self.assertIs(jane.bio, bio)
             self.assertEqual(jane.total_books, 1)
+
+
+class PrefetchCompositionTests(EnableIdentityMapMixin, TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.book = Book.objects.create(title="Poem")
+        cls.author = Author.objects.create(name="Jane", first_book=cls.book)
+        cls.book.authors.add(cls.author)
+
+    def test_prefetching_works_in_cases_where_promotion_would_be_needed(self):
+        queryset = Book.objects.prefetch_related(
+            Prefetch(
+                'first_time_authors',
+                queryset=Author.objects.prefetch_related(
+                    Prefetch(
+                        'first_book',
+                        queryset=Book.objects.prefetch_related('authors')
+                    )
+                )
+            )
+        )
+        with self.assertNumQueries(3):
+            book, = list(queryset)
+
+        with self.assertNumQueries(0):
+            self.assertIs(book, book.first_time_authors.all()[0].first_book)
+            self.assertEqual(len(book.authors.all()), 1)

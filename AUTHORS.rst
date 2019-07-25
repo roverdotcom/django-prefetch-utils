@@ -1,5 +1,4 @@
-
 Authors
 =======
 
-* Mike Hansen - https://blog.ionelmc.ro
+* Mike Hansen - https://github.com/mwhansen/

@@ -1,17 +1,17 @@
-========
-Contents
-========
-
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :hidden:
 
-   readme
-   installation
+   self
+   getting_started
    usage
+   identity_map_comparison
    reference/index
    contributing
    authors
    changelog
+
+.. include:: ../README.rst
 
 Indices and tables
 ==================
@@ -19,4 +19,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

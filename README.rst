@@ -52,7 +52,35 @@ Overview
 
 .. end-badges
 
-An example package. Generated with cookiecutter-pylibrary.
+This library currently provides a replacement implementation of
+``prefetch_related_objects`` which uses an `identity map
+<https://en.wikipedia.org/wiki/Identity_map_pattern>`_ to
+automatically reduce the number of queries performed when prefetching.
+
+For example, considered the following data model::
+
+   class Toy(models.Model):
+       dog = models.ForeignKey('dogs.Dog')
+
+   class Dog(models.Model):
+       name = models.CharField()
+       favorite_toy = models.ForeignKey('toys.Toy', null=True)
+
+
+With this library, we get don't need to do a database query to
+perform the prefetch for ``favorite_toy`` since that object
+had already been fetched as part of the prefetching for ``toy_set``::
+
+   >>> dog = Dog.objects.prefetch_related('toys', 'favorite_toy')[0]
+   SELECT * from dogs_dog limit 1;
+   SELECT * FROM toys_toy where toys_toy.dog_id IN (1);
+   >>> dog.favorite_toy is dog.toy_set.all()[0]  # no queries done
+   True
+
+
+The plan is to increase the scope of the library in future versions to
+provide additional tools for working with ``prefetch_related``.
+
 
 * Free software: BSD 3-Clause License
 
@@ -68,28 +96,3 @@ Documentation
 
 
 https://django-prefetch-utils.readthedocs.io/
-
-
-Development
-===========
-
-To run the all tests run::
-
-    tox
-
-Note, to combine the coverage data from all the tox environments run:
-
-.. list-table::
-    :widths: 10 90
-    :stub-columns: 1
-
-    - - Windows
-      - ::
-
-            set PYTEST_ADDOPTS=--cov-append
-            tox
-
-    - - Other
-      - ::
-
-            PYTEST_ADDOPTS=--cov-append tox
