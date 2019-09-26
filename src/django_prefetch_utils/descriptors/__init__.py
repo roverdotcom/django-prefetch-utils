@@ -9,6 +9,8 @@ can be found in the Python documentation.
 from .annotation import AnnotationDescriptor
 from .base import GenericPrefetchRelatedDescriptor
 from .base import GenericSinglePrefetchRelatedDescriptorMixin
+from .top_child import TopChildDescriptorFromField
+from .top_child import TopChildDescriptorFromGenericRelation
 from .via_lookup import RelatedQuerySetDescriptorViaLookup
 from .via_lookup import RelatedQuerySetDescriptorViaLookupBase
 from .via_lookup import RelatedSingleObjectDescriptorViaLookup
