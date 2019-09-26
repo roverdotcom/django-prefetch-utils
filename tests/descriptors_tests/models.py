@@ -11,6 +11,7 @@ from prefetch_related.models import BookWithYear
 from prefetch_related.models import Reader
 
 from django_prefetch_utils.descriptors import AnnotationDescriptor
+from django_prefetch_utils.descriptors import EqualFieldsDescriptor
 from django_prefetch_utils.descriptors import RelatedQuerySetDescriptorViaLookup
 from django_prefetch_utils.descriptors import RelatedSingleObjectDescriptorViaLookup
 from django_prefetch_utils.descriptors import TopChildDescriptorFromField
@@ -68,3 +69,24 @@ class LastBookDescriptor(TopChildDescriptorFromField):
 
 class AuthorWithLastBook(AuthorWithAge):
     last_book = LastBookDescriptor()
+
+
+class BookWithYearlyBios(BookWithYear):
+    bios = EqualFieldsDescriptor(
+        'prefetch_related.YearlyBio',
+        [('published_year', 'year')]
+    )
+
+
+class XYZModelOne(models.Model):
+    x = models.IntegerField()
+    y = models.IntegerField()
+    z = models.CharField(max_length=10)
+
+
+class XYZModelTwo(models.Model):
+    x = models.IntegerField()
+    y = models.IntegerField()
+    z = models.CharField(max_length=10)
+
+    ones = EqualFieldsDescriptor(XYZModelOne, ['x', 'y', 'z'])
