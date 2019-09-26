@@ -10,6 +10,7 @@ INSTALLED_APPS = [
     'django_prefetch_utils',
     'prefetch_related',
     'foreign_object',
+    'descriptors_tests',
 ]
 ROOT_URLCONF = []
 
