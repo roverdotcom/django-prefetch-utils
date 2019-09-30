@@ -56,6 +56,10 @@ class EqualFieldsDescriptor(GenericPrefetchRelatedDescriptor):
 
     def get_prefetch_model_class(self):
         """
+        Returns the model class of the objects that are prefetched
+        by this descriptor.
+
+        :returns: subclass of :class:`django.db.models.model`
         """
         if isinstance(self._related_model, basestring):
             self._related_model = apps.get_model(self._related_model)

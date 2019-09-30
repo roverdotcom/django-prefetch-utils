@@ -58,7 +58,7 @@ class TopChildDescriptor(
 
     def get_prefetch_model_class(self):
         """
-        returns the model class of the objects that are prefetched
+        Returns the model class of the objects that are prefetched
         by this descriptor.
 
         :returns: subclass of :class:`django.db.models.model`
