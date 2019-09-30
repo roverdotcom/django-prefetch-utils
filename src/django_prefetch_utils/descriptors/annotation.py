@@ -29,6 +29,12 @@ class AnnotationDescriptor(
         self.annotation = annotation
 
     def get_prefetch_model_class(self):
+        """
+        Returns the model class of the objects that are prefetched
+        by this descriptor.
+
+        :returns: subclass of :class:`django.db.models.model`
+        """
         return self.model
 
     @cached_property

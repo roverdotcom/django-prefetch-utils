@@ -22,4 +22,4 @@ To use the `identity map
        'django_prefetch_utils.identity_map.prefetch_related_objects'
    )
 
-See :doc:`usage` for more ways to use this library.
+See :doc:`identity_map_usage` for more ways to use this library.

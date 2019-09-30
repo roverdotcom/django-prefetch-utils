@@ -1,6 +1,6 @@
-==========
-Comparison
-==========
+=======================
+Identity Map Comparison
+=======================
 
 The
 :func:`django_prefetch_utils.identity_map.prefetch_related_objects`
