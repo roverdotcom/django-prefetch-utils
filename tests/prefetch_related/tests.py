@@ -849,7 +849,7 @@ class CustomPrefetchTests(TestCase):
             self.traverse_qs(list(houses), [['occupants', 'houses', 'main_room']])
 
     def test_values_queryset(self):
-        with self.assertRaisesMessage(ValueError, 'Prefetch querysets cannot use values().'):
+        with self.assertRaisesMessage(ValueError, 'Prefetch querysets cannot use'):
             Prefetch('houses', House.objects.values('pk'))
         # That error doesn't affect managers with custom ModelIterable subclasses
         self.assertIs(Teacher.objects_custom.all()._iterable_class, ModelIterableSubclass)
