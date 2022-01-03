@@ -32,11 +32,6 @@ be used::
             toys = list(Toy.objects.all)  # uses identity map implementation
 
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import threading
 from contextlib import ContextDecorator
 
