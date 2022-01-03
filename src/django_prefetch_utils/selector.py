@@ -38,7 +38,6 @@ from contextlib import ContextDecorator
 import django.db.models.query
 from django.db.models.query import prefetch_related_objects as original_prefetch_related_objects
 
-
 _active = threading.local()
 
 

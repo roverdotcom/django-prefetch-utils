@@ -1,5 +1,4 @@
 from django.test import TestCase
-
 from prefetch_related.models import BookWithYear
 
 from django_prefetch_utils.descriptors import TopChildDescriptorFromField

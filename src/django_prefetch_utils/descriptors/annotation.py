@@ -1,4 +1,5 @@
 from django.utils.functional import cached_property
+
 from .base import GenericPrefetchRelatedDescriptor
 from .base import GenericSinglePrefetchRelatedDescriptorMixin
 
