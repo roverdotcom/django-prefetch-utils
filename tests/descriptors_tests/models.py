@@ -30,14 +30,6 @@ class Comment(models.Model):
         ordering = ['id']
 
 
-class LatestCommentDescriptor(TopChildDescriptorFromGenericRelation):
-    def get_child_field(self):
-        return BookWithAuthorCount.comments.field
-
-    def get_child_order_by(self):
-        return ('-id',)
-
-
 class BookWithAuthorCount(Book):
     class Meta(object):
         proxy = True
@@ -45,7 +37,10 @@ class BookWithAuthorCount(Book):
     authors_count = AnnotationDescriptor(Count('authors'))
     comments = GenericRelation(Comment, object_id_field='object_pk')
 
-    latest_comment = LatestCommentDescriptor()
+    latest_comment = TopChildDescriptorFromGenericRelation(
+        comments,
+        order_by=('-id',)
+    )
 
 
 class ReaderWithAuthorsRead(Reader):
@@ -59,16 +54,11 @@ class ReaderWithAuthorsRead(Reader):
     )
 
 
-class LastBookDescriptor(TopChildDescriptorFromField):
-    def get_child_field(self):
-        return BookWithYear._meta.get_field('aged_authors')
-
-    def get_child_order_by(self):
-        return ('-published_year',)
-
-
 class AuthorWithLastBook(AuthorWithAge):
-    last_book = LastBookDescriptor()
+    last_book = TopChildDescriptorFromField(
+        'prefetch_related.BookWithYear.aged_authors',
+        order_by=('-published_year',)
+    )
 
 
 class BookWithYearlyBios(BookWithYear):
