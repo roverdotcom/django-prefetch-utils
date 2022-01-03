@@ -55,7 +55,7 @@ class AnnotationDescriptor(
 
         # Perform the query if we haven't already fetched the annotated value
         if not self.is_cached(obj):
-            annotation_value = super(AnnotationDescriptor, self).__get__(obj, type)
+            annotation_value = super().__get__(obj, type)
             setattr(obj, self.cache_name, annotation_value)
 
         return getattr(obj, self.cache_name)[1]

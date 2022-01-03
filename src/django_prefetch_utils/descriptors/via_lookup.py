@@ -63,10 +63,7 @@ class RelatedQuerySetDescriptorViaLookupBase(GenericPrefetchRelatedDescriptor):
            as part of the ``get_prefetch_queryset`` method.
         :rtype: :class:`django.db.models.QuerySet`
         """
-        queryset = super(
-            RelatedQuerySetDescriptorViaLookupBase,
-            self
-        ).update_queryset_for_prefetching(queryset)
+        queryset = super().update_queryset_for_prefetching(queryset)
         return queryset.annotate(**{
             self.obj_pk_annotation: F(self.lookup)
         })

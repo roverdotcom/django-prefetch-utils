@@ -209,7 +209,7 @@ class TopChildDescriptorFromField(TopChildDescriptorFromFieldBase):
     def __init__(self, field, order_by):
         self._field = field
         self._order_by = order_by
-        super(TopChildDescriptorFromField, self).__init__()
+        super().__init__()
 
     def get_child_field(self):
         if isinstance(self._field, str):
@@ -287,10 +287,7 @@ class TopChildDescriptorFromGenericRelationBase(TopChildDescriptor):
 
         :rtype: :class:`django.db.models.QuerySet`
         """
-        queryset = super(
-            TopChildDescriptorFromGenericRelationBase,
-            self
-        ).get_queryset(queryset=queryset)
+        queryset = super().get_queryset(queryset=queryset)
         return self.apply_content_type_filter(queryset)
 
     def get_subquery(self):
@@ -300,10 +297,7 @@ class TopChildDescriptorFromGenericRelationBase(TopChildDescriptor):
 
         :rtype: :class:`django.db.models.QuerySet`
         """
-        subquery = super(
-            TopChildDescriptorFromGenericRelationBase,
-            self
-        ).get_subquery()
+        subquery = super().get_subquery()
         return self.apply_content_type_filter(subquery)
 
 
@@ -316,7 +310,7 @@ class TopChildDescriptorFromGenericRelation(
     def __init__(self, generic_relation, order_by):
         self._generic_relation = generic_relation
         self._order_by = order_by
-        super(TopChildDescriptorFromGenericRelation, self).__init__()
+        super().__init__()
 
     def get_child_field(self):
         return getattr(self.model, self._generic_relation.name).field

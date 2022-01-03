@@ -18,7 +18,7 @@ class PersistentPrefetchIdentityMapIntegrationTests(TestCase):
         cls.author = Author.objects.create(name="Jane", first_book=cls.book)
 
     def setUp(self):
-        super(PersistentPrefetchIdentityMapIntegrationTests, self).setUp()
+        super().setUp()
         cm = use_persistent_prefetch_identity_map()
         self.identity_map = cm.__enter__()
         self.addCleanup(lambda: cm.__exit__(None, None, None))
@@ -67,7 +67,7 @@ class PersistentPrefetchIdentityMapIntegrationTests(TestCase):
 
 class FetchAllDescriptorTests(TestCase):
     def setUp(self):
-        super(FetchAllDescriptorTests, self).setUp()
+        super().setUp()
         enable_fetch_all_descriptor()
         self.addCleanup(disable_fetch_all_descriptor)
 
