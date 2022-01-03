@@ -1,7 +1,6 @@
 import datetime
 from operator import attrgetter
 
-import django
 from django.core.exceptions import FieldError
 from django.db import models
 from django.db.models.fields.related import ForeignObject
@@ -10,7 +9,6 @@ from django.test import TestCase
 from django.test import skipUnlessDBFeature
 from django.test.utils import isolate_apps
 from django.utils import translation
-from pyenv_markers import requires_django_2_2
 
 from .models import Article
 from .models import ArticleIdea
@@ -66,7 +64,6 @@ class MultiColumnFKTests(TestCase):
         with self.assertRaises(Person.DoesNotExist):
             getattr(membership, 'person')
 
-    @requires_django_2_2
     def test_reverse_query_returns_correct_result(self):
         # Creating a valid membership because it has the same country has the person
         Membership.objects.create(
@@ -204,8 +201,7 @@ class MultiColumnFKTests(TestCase):
                 list(p.membership_set.all())
                 for p in Person.objects.prefetch_related('membership_set').order_by('pk')]
 
-        expected_queries = 9 if django.VERSION < (2, 2) else 7
-        with self.assertNumQueries(expected_queries):
+        with self.assertNumQueries(7):
             normal_membership_sets = [
                 list(p.membership_set.all())
                 for p in Person.objects.order_by('pk')

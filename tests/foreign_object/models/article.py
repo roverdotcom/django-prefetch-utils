@@ -11,15 +11,9 @@ class ArticleTranslationDescriptor(ForwardManyToOneDescriptor):
     def __set__(self, instance, value):
         if instance is None:
             raise AttributeError("%s must be accessed via instance" % self.field.name)
-        if django.VERSION < (2, 0):
-            setattr(instance, self.cache_name, value)
-        else:
-            self.field.set_cached_value(instance, value)
+        self.field.set_cached_value(instance, value)
         if value is not None and not self.field.remote_field.multiple:
-            if django.VERSION < (2, 0):
-                setattr(value, self.field.related.get_cache_name(), instance)
-            else:
-                self.field.remote_field.set_cached_value(value, instance)
+            self.field.remote_field.set_cached_value(value, instance)
 
 
 class ColConstraint:

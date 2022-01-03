@@ -78,7 +78,4 @@ class FetchAllDescriptorTests(TestCase):
 
     def test_disable_descriptor(self):
         disable_fetch_all_descriptor()
-        if sys.version_info[0] < 3:
-            self.assertIs(QuerySet._fetch_all.im_func, original_fetch_all.im_func)
-        else:
-            self.assertIs(QuerySet._fetch_all, original_fetch_all)
+        self.assertIs(QuerySet._fetch_all, original_fetch_all)
