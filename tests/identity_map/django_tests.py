@@ -140,7 +140,7 @@ for mod_string in DJANGO_TEST_MODULES:
             continue
 
         new_cls = type(cls)(
-            "IdentityMap".format(cls.__name__), (EnableIdentityMapMixin, cls), {}
+            "IdentityMap{}".format(cls.__name__), (EnableIdentityMapMixin, cls), {}
         )
         globals()["IdentityMap{}".format(attr)] = new_cls
         del cls
