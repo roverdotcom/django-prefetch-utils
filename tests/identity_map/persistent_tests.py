@@ -1,5 +1,3 @@
-import sys
-
 from django.db.models.query import QuerySet
 from django.test import TestCase
 from prefetch_related.models import Author

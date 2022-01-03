@@ -2,11 +2,6 @@ from django.apps import AppConfig
 from django.conf import settings
 from django.utils.module_loading import import_string
 
-try:
-    basestring
-except NameError:
-    basestring = str
-
 
 class DjangoPrefetchUtilsAppConfig(AppConfig):
     name = "django_prefetch_utils"
@@ -26,7 +21,7 @@ class DjangoPrefetchUtilsAppConfig(AppConfig):
         if selected is None:
             return
 
-        if isinstance(selected, basestring):
+        if isinstance(selected, str):
             selected = import_string(selected)
 
         set_default_prefetch_related_objects(selected)

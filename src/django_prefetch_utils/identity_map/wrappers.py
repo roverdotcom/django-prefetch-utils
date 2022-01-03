@@ -1,7 +1,6 @@
 import itertools
 
 import wrapt
-from future.builtins import super
 
 from .maps import AnnotatingIdentityMap
 from .maps import ExtraIdentityMap

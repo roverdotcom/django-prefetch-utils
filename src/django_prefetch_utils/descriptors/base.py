@@ -1,8 +1,6 @@
 import abc
-from builtins import object
 
 from django.db.models import Manager
-from future.utils import with_metaclass
 
 
 class GenericPrefetchRelatedDescriptorManager(Manager):
@@ -74,7 +72,7 @@ class GenericPrefetchRelatedDescriptorManager(Manager):
         )
 
 
-class GenericPrefetchRelatedDescriptor(with_metaclass(abc.ABCMeta, object)):
+class GenericPrefetchRelatedDescriptor(abc.ABC):
     manager_class = GenericPrefetchRelatedDescriptorManager
 
     is_single = False

@@ -1,7 +1,6 @@
 from collections import namedtuple
 
 from django.apps import apps
-from past.builtins import basestring
 
 from .base import GenericPrefetchRelatedDescriptor
 
@@ -61,7 +60,7 @@ class EqualFieldsDescriptor(GenericPrefetchRelatedDescriptor):
 
         :returns: subclass of :class:`django.db.models.model`
         """
-        if isinstance(self._related_model, basestring):
+        if isinstance(self._related_model, str):
             self._related_model = apps.get_model(self._related_model)
         return self._related_model
 

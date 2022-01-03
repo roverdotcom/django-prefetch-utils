@@ -1,13 +1,11 @@
 import abc
-from builtins import object
 
 from django.db.models import Model
 from django.db.models import F
 from django.db.models import Prefetch
-from future.utils import with_metaclass
 
 
-class GenericPrefetchDescriptorTestCaseMixin(with_metaclass(abc.ABCMeta, object)):
+class GenericPrefetchDescriptorTestCaseMixin(abc.ABC):
     supports_custom_querysets = True
 
     def setUp(self):
