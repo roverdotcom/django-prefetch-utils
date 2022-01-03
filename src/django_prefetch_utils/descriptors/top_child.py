@@ -1,9 +1,11 @@
 import abc
 
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import F
 from django.utils.functional import cached_property
+
 from .base import GenericPrefetchRelatedDescriptor
 from .base import GenericSinglePrefetchRelatedDescriptorMixin
 
@@ -103,7 +105,7 @@ class TopChildDescriptor(
     def get_top_child_pks(self, parent_pks):
         """
         Returns a queryset for the primary keys of the top children for
-        the parent models whose primary keys are in *parent_pks:
+        the parent models whose primary keys are in *parent_pks*.
 
         :param list parent_pks: a list of primary keys for the parent
            models whose children we want to fetch.
@@ -173,7 +175,7 @@ class TopChildDescriptor(
         return parent.pk
 
 
-class TopChildDescriptorFromField(TopChildDescriptor):
+class TopChildDescriptorFromFieldBase(TopChildDescriptor):
     """
     A subclass of :class:`TopChildDescriptor` for use when the
     children are related to the parent by a foreign key.  In that
@@ -203,7 +205,24 @@ class TopChildDescriptorFromField(TopChildDescriptor):
         return self.child_field.name
 
 
-class TopChildDescriptorFromGenericRelation(TopChildDescriptor):
+class TopChildDescriptorFromField(TopChildDescriptorFromFieldBase):
+    def __init__(self, field, order_by):
+        self._field = field
+        self._order_by = order_by
+        super(TopChildDescriptorFromField, self).__init__()
+
+    def get_child_field(self):
+        if isinstance(self._field, str):
+            model_string, field_name = self._field.rsplit('.', 1)
+            model = apps.get_model(model_string)
+            self._field = model._meta.get_field(field_name)
+        return self._field
+
+    def get_child_order_by(self):
+        return self._order_by
+
+
+class TopChildDescriptorFromGenericRelationBase(TopChildDescriptor):
     """
     A subclass of :class:`TopChildDescriptor` for use when the children
     are described by a
@@ -269,7 +288,7 @@ class TopChildDescriptorFromGenericRelation(TopChildDescriptor):
         :rtype: :class:`django.db.models.QuerySet`
         """
         queryset = super(
-            TopChildDescriptorFromGenericRelation,
+            TopChildDescriptorFromGenericRelationBase,
             self
         ).get_queryset(queryset=queryset)
         return self.apply_content_type_filter(queryset)
@@ -282,7 +301,25 @@ class TopChildDescriptorFromGenericRelation(TopChildDescriptor):
         :rtype: :class:`django.db.models.QuerySet`
         """
         subquery = super(
-            TopChildDescriptorFromGenericRelation,
+            TopChildDescriptorFromGenericRelationBase,
             self
         ).get_subquery()
         return self.apply_content_type_filter(subquery)
+
+
+class TopChildDescriptorFromGenericRelation(
+        TopChildDescriptorFromGenericRelationBase):
+    """
+    For further customization,
+    """
+
+    def __init__(self, generic_relation, order_by):
+        self._generic_relation = generic_relation
+        self._order_by = order_by
+        super(TopChildDescriptorFromGenericRelation, self).__init__()
+
+    def get_child_field(self):
+        return getattr(self.model, self._generic_relation.name).field
+
+    def get_child_order_by(self):
+        return self._order_by
