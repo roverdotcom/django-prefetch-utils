@@ -1,7 +1,7 @@
 import abc
 
-from django.db.models import Model
 from django.db.models import F
+from django.db.models import Model
 from django.db.models import Prefetch
 
 

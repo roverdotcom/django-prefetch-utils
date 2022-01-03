@@ -1,5 +1,4 @@
 from django.test import TestCase
-
 from prefetch_related.models import Author
 from prefetch_related.models import Book
 
