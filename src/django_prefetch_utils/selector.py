@@ -149,6 +149,6 @@ class use_original_prefetch_related_objects(override_prefetch_related_objects):
 
     """
     def __init__(self):
-        super(use_original_prefetch_related_objects, self).__init__(
+        super().__init__(
             original_prefetch_related_objects
         )

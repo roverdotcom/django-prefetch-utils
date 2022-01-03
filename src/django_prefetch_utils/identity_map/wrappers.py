@@ -48,7 +48,7 @@ class IdentityMapObjectProxy(wrapt.ObjectProxy):
     __slots__ = "_self_identity_map"
 
     def __init__(self, identity_map, wrapped):
-        super(IdentityMapObjectProxy, self).__init__(wrapped)
+        super().__init__(wrapped)
         self._self_identity_map = identity_map
 
 
@@ -92,14 +92,14 @@ class IdentityMapPrefetchQuerySetWrapper(IdentityMapObjectProxy):
 
     def __init__(self, identity_map, queryset):
         identity_map = wrap_identity_map_for_queryset(identity_map, queryset)
-        super(IdentityMapPrefetchQuerySetWrapper, self).__init__(identity_map, queryset)
+        super().__init__(identity_map, queryset)
 
 
 class ForwardDescriptorPrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrapper):
     __slots__ = ("_self_field", "_self_instances_dict", "_self_prefix")
 
     def __init__(self, identity_map, field, instances_dict, prefix, queryset):
-        super(ForwardDescriptorPrefetchQuerySetWrapper, self).__init__(
+        super().__init__(
             identity_map, queryset
         )
         self._self_field = field
@@ -211,7 +211,7 @@ class ReverseOneToOnePrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrapper)
     __slots__ = ("_self_related", "_self_instances_dict")
 
     def __init__(self, identity_map, related, instances_dict, queryset):
-        super(ReverseOneToOnePrefetchQuerySetWrapper, self).__init__(
+        super().__init__(
             identity_map, queryset
         )
         self._self_related = related
@@ -277,7 +277,7 @@ class ReverseManyToOnePrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrapper
     __slots__ = ("_self_field", "_self_instances_dict")
 
     def __init__(self, identity_map, field, instances_dict, queryset):
-        super(ReverseManyToOnePrefetchQuerySetWrapper, self).__init__(
+        super().__init__(
             identity_map, queryset
         )
         self._self_field = field
@@ -321,7 +321,7 @@ class ManyToManyPrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrapper):
     __slots__ = ("_self_rel_obj_attr", "_self_memo")
 
     def __init__(self, identity_map, queryset, rel_obj_attr):
-        super(ManyToManyPrefetchQuerySetWrapper, self).__init__(identity_map, queryset)
+        super().__init__(identity_map, queryset)
         self._self_rel_obj_attr = rel_obj_attr
         self._self_memo = {}
 
@@ -392,7 +392,7 @@ class GenericForeignKeyPrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrappe
     __slots__ = ("_self_prefix",)
 
     def __init__(self, identity_map, prefix, queryset):
-        super(GenericForeignKeyPrefetchQuerySetWrapper, self).__init__(
+        super().__init__(
             identity_map, queryset
         )
         self._self_prefix = prefix

@@ -26,7 +26,7 @@ class PrefetchIdentityMap(defaultdict):
     associated Django model instance.
     """
     def __init__(self):
-        super(PrefetchIdentityMap, self).__init__(WeakValueDictionary)
+        super().__init__(WeakValueDictionary)
 
     def __getitem__(self, obj):
         subdict = self.get_map_for_model(type(obj))
@@ -44,7 +44,7 @@ class PrefetchIdentityMap(defaultdict):
 
         :rtype: :class:`weakref.WeakValueDictionary`
         """
-        return super(PrefetchIdentityMap, self).__getitem__(model)
+        return super().__getitem__(model)
 
 
 class RelObjAttrMemoizingIdentityMap(wrapt.ObjectProxy):
@@ -59,7 +59,7 @@ class RelObjAttrMemoizingIdentityMap(wrapt.ObjectProxy):
     __slots__ = ("_self_rel_obj_attr", "_self_memo")
 
     def __init__(self, rel_obj_attr, wrapped):
-        super(RelObjAttrMemoizingIdentityMap, self).__init__(wrapped)
+        super().__init__(wrapped)
         self._self_rel_obj_attr = rel_obj_attr
         self._self_memo = {}
 
@@ -80,7 +80,7 @@ class AnnotatingIdentityMap(wrapt.ObjectProxy):
     __slots__ = ("_self_annotation_keys",)
 
     def __init__(self, annotation_keys, wrapped):
-        super(AnnotatingIdentityMap, self).__init__(wrapped)
+        super().__init__(wrapped)
         self._self_annotation_keys = annotation_keys
 
     def __getitem__(self, obj):
@@ -96,7 +96,7 @@ class SelectRelatedIdentityMap(wrapt.ObjectProxy):
     MISSING = object()
 
     def __init__(self, select_related, wrapped):
-        super(SelectRelatedIdentityMap, self).__init__(wrapped)
+        super().__init__(wrapped)
         self._self_select_related = select_related
 
     def get_cached_value(self, field, instance):
@@ -140,7 +140,7 @@ class ExtraIdentityMap(wrapt.ObjectProxy):
     __slots__ = ("_self_extra", )
 
     def __init__(self, extra, wrapped):
-        super(ExtraIdentityMap, self).__init__(wrapped)
+        super().__init__(wrapped)
         self._self_extra = extra
 
     def __getitem__(self, obj):

@@ -34,7 +34,7 @@ class PrefetchRelatedObjectsTests(TestCase):
         cls.book.authors.add(cls.author)
 
     def setUp(self):
-        super(PrefetchRelatedObjectsTests, self).setUp()
+        super().setUp()
         self.book = Book.objects.first()
 
     def test_does_nothing_with_no_instances(self):

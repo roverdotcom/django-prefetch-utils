@@ -36,7 +36,7 @@ class StartsWithRelation(models.ForeignObject):
 
     def __init__(self, *args, **kwargs):
         kwargs['on_delete'] = models.DO_NOTHING
-        super(StartsWithRelation, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @property
     def field(self):
@@ -86,7 +86,7 @@ class StartsWithRelation(models.ForeignObject):
         )]
 
     def contribute_to_class(self, cls, name, private_only=False):
-        super(StartsWithRelation, self).contribute_to_class(cls, name, private_only)
+        super().contribute_to_class(cls, name, private_only)
         setattr(cls, self.name, ReverseManyToOneDescriptor(self))
 
 

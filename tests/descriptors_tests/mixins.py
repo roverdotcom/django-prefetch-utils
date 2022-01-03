@@ -9,7 +9,7 @@ class GenericPrefetchDescriptorTestCaseMixin(abc.ABC):
     supports_custom_querysets = True
 
     def setUp(self):
-        super(GenericPrefetchDescriptorTestCaseMixin, self).setUp()
+        super().setUp()
         self.obj = self.instance_queryset.get(pk=self.get_object().pk)
 
     @abc.abstractproperty

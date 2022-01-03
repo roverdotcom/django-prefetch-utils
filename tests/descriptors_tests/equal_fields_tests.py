@@ -66,7 +66,7 @@ class EqualFieldsDescriptorWithMultipleJoinsTests(
 
 class EqualFieldsDescriptorWithCommonTests(TestCase):
     def setUp(self):
-        super(EqualFieldsDescriptorWithCommonTests, self).setUp()
+        super().setUp()
         self.descriptor = EqualFieldsDescriptor(XYZModelTwo, ['a'])
 
     def test_preprocess_join_fields_single_string(self):

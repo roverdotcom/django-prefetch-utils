@@ -18,7 +18,7 @@ def mock_implementation(*args, **kwargs):
 
 class SelectorTests(TestCase):
     def setUp(self):
-        super(SelectorTests, self).setUp()
+        super().setUp()
         self.addCleanup(enable_prefetch_related_objects_selector)
         self.addCleanup(remove_default_prefetch_related_objects)
 

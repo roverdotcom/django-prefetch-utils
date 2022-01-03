@@ -220,9 +220,7 @@ class GenericSinglePrefetchRelatedDescriptorMixin(object):
            default queryset for the model
         :rtype: :class:`django.db.models.QuerySet`
         """
-        qs = super(GenericSinglePrefetchRelatedDescriptorMixin, self).get_queryset(
-            queryset=queryset
-        )
+        qs = super().get_queryset(queryset=queryset)
         # Remove warning from Django 3.1: RemovedInDjango31Warning:
         # QuerySet won't use Meta.ordering in Django 3.1. Add .order_by('id') to
         # retain the current query.

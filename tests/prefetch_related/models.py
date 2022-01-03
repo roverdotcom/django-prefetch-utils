@@ -322,7 +322,7 @@ class Flea(models.Model):
 # Models for testing recursion protection
 class DogWithToysManager(models.Manager):
     def get_queryset(self):
-        qs = super(DogWithToysManager, self).get_queryset()
+        qs = super().get_queryset()
         return qs.prefetch_related("toys")
 
 
@@ -334,7 +334,7 @@ class DogWithToys(models.Model):
 
 class ToyWithDogsManager(models.Manager):
     def get_queryset(self):
-        qs = super(ToyWithDogsManager, self).get_queryset()
+        qs = super().get_queryset()
         return qs.prefetch_related("dogs")
 
 
