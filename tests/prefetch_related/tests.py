@@ -8,9 +8,6 @@ from django.db.models.query import prefetch_related_objects
 from django.test import TestCase
 from django.test import override_settings
 from django.test.utils import CaptureQueriesContext
-from pyenv_markers import requires_django_2_0
-from pyenv_markers import requires_django_2_1
-from pyenv_markers import requires_django_2_2
 
 from .models import Author
 from .models import Author2
@@ -106,7 +103,6 @@ class PrefetchRelatedTests(TestDataMixin, TestCase):
             with self.assertRaises(BookWithYear.DoesNotExist):
                 book.bookwithyear
 
-    @requires_django_2_0
     def test_onetoone_reverse_with_to_field_pk(self):
         """
         A model (Bio) with a OneToOneField primary key (author) that references
@@ -307,7 +303,6 @@ class PrefetchRelatedTests(TestDataMixin, TestCase):
         self.assertWhereContains(sql, self.author1.id)
 
 
-@requires_django_2_1
 class RawQuerySetTests(TestDataMixin, TestCase):
     def test_basic(self):
         with self.assertNumQueries(2):
@@ -834,7 +829,6 @@ class CustomPrefetchTests(TestCase):
             self.room2_1
         )
 
-    @requires_django_2_1
     def test_nested_prefetch_related_with_duplicate_prefetcher(self):
         """
         Nested prefetches whose name clashes with descriptor names
@@ -1221,7 +1215,6 @@ class MultiDbTests(TestCase):
     multi_db = True
     databases = {'default', 'other'}
 
-    @requires_django_2_2
     def test_using_is_honored_m2m(self):
         B = Book.objects.using('other')
         A = Author.objects.using('other')
@@ -1264,7 +1257,6 @@ class MultiDbTests(TestCase):
                          "Emily: Poems, Wuthering Heights\n"
                          "Jane: Sense and Sensibility\n")
 
-    @requires_django_2_2
     def test_using_is_honored_fkey(self):
         B = Book.objects.using('other')
         A = Author.objects.using('other')
@@ -1522,7 +1514,6 @@ class DirectPrefechedObjectCacheReuseTests(TestCase):
             self.assertEqual(book1.first_authors[1].happy_place, [])
             self.assertEqual(book2.first_authors[0].happy_place, [self.author2_address1])
 
-    @requires_django_2_1
     def test_prefetch_reverse_foreign_key(self):
         with self.assertNumQueries(2):
             bookwithyear1, = BookWithYear.objects.prefetch_related('bookreview_set')

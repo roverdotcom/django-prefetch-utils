@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 
 import itertools
 
-import django
 import wrapt
 from future.builtins import super
 
@@ -211,11 +210,7 @@ class ForwardDescriptorPrefetchWrapper(IdentityMapObjectProxy):
         queryset = ForwardDescriptorPrefetchQuerySetWrapper(
             self._self_identity_map, self.field, instances_dict, prefix, queryset
         )
-        prefetch_data = (queryset, rel_obj_attr, instance_attr, True, cache_name)
-        if django.VERSION < (2, 0):
-            return prefetch_data
-        else:
-            return prefetch_data + (False,)
+        return (queryset, rel_obj_attr, instance_attr, True, cache_name, False)
 
 
 class ReverseOneToOnePrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrapper):
@@ -281,11 +276,7 @@ class ReverseOneToOneDescriptorPrefetchWrapper(IdentityMapObjectProxy):
             self._self_identity_map, self.related, instances_dict, queryset
         )
         cache_name = getattr(self, "cache_name", self.related.get_cache_name())
-        prefetch_data = (queryset, rel_obj_attr, instance_attr, True, cache_name)
-        if django.VERSION < (2, 0):
-            return prefetch_data
-        else:
-            return prefetch_data + (False,)
+        return (queryset, rel_obj_attr, instance_attr, True, cache_name, False)
 
 
 class ReverseManyToOnePrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrapper):
@@ -327,16 +318,9 @@ class ReverseManyToOneDescriptorPrefetchWrapper(IdentityMapObjectProxy):
         queryset = ReverseManyToOnePrefetchQuerySetWrapper(
             self._self_identity_map, self.field, instances_dict, queryset
         )
-        if django.VERSION < (2, 1):
-            cache_name = self.field.related_query_name()
-        else:
-            cache_name = self.field.remote_field.get_cache_name()
+        cache_name = self.field.remote_field.get_cache_name()
 
-        prefetch_data = (queryset, rel_obj_attr, instance_attr, False, cache_name)
-        if django.VERSION < (2, 0):
-            return prefetch_data
-        else:
-            return prefetch_data + (False,)
+        return (queryset, rel_obj_attr, instance_attr, False, cache_name, False)
 
 
 class ManyToManyPrefetchQuerySetWrapper(IdentityMapPrefetchQuerySetWrapper):

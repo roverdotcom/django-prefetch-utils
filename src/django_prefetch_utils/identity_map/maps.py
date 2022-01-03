@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 from collections import defaultdict
 from weakref import WeakValueDictionary
 
-import django
 import wrapt
 from future.builtins import super
 
@@ -106,21 +105,13 @@ class SelectRelatedIdentityMap(wrapt.ObjectProxy):
         super(SelectRelatedIdentityMap, self).__init__(wrapped)
         self._self_select_related = select_related
 
-    if django.VERSION < (2, 0):
-        def get_cached_value(self, field, instance):
-            return instance.__dict__.get(field.get_cache_name(), self.MISSING)
+    def get_cached_value(self, field, instance):
+        if not field.is_cached(instance):
+            return self.MISSING
+        return field.get_cached_value(instance)
 
-        def set_cached_value(self, field, instance, value):
-            setattr(instance, field.get_cache_name(), value)
-
-    else:
-        def get_cached_value(self, field, instance):
-            if not field.is_cached(instance):
-                return self.MISSING
-            return field.get_cached_value(instance)
-
-        def set_cached_value(self, field, instance, value):
-            field.set_cached_value(instance, value)
+    def set_cached_value(self, field, instance, value):
+        field.set_cached_value(instance, value)
 
     def transfer_select_related(self, select_related, source, target):
         for key, sub_select_related in select_related.items():

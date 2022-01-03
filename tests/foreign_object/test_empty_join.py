@@ -1,5 +1,4 @@
 from django.test import TestCase
-from pyenv_markers import requires_django_2_0
 
 from .models import SlugPage
 
@@ -17,7 +16,6 @@ class RestrictedConditionsTests(TestCase):
         ]
         SlugPage.objects.bulk_create([SlugPage(slug=slug) for slug in slugs])
 
-    @requires_django_2_0
     def test_restrictions_with_no_joining_columns(self):
         """
         It's possible to create a working related field that doesn't
@@ -43,7 +41,6 @@ class RestrictedConditionsTests(TestCase):
             ['a', 'a/b', 'a/b/a'],
         )
 
-    @requires_django_2_0
     def test_empty_join_conditions(self):
         x = SlugPage.objects.get(slug='x')
         message = "Join generated an empty ON clause."

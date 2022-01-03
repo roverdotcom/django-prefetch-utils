@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 import abc
 from builtins import object
 
-import django
 from django.db.models import Manager
 from future.utils import with_metaclass
 
@@ -70,7 +69,7 @@ class GenericPrefetchRelatedDescriptorManager(Manager):
         qs = self.descriptor.filter_queryset_for_instances(queryset, instances)
         qs = self.descriptor.update_queryset_for_prefetching(qs)
         qs._add_hints(instance=instances[0])
-        prefetch_data = (
+        return (
             qs,
             self.descriptor.get_join_value_for_related_obj,
             self.descriptor.get_join_value_for_instance,
@@ -78,11 +77,6 @@ class GenericPrefetchRelatedDescriptorManager(Manager):
             self.cache_name,
             True,  # is_descriptor
         )
-
-        if django.VERSION < (2, 0):
-            return prefetch_data[:-1]
-        else:
-            return prefetch_data
 
 
 class GenericPrefetchRelatedDescriptor(with_metaclass(abc.ABCMeta, object)):

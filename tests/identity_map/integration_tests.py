@@ -1,4 +1,3 @@
-import django
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count
 from django.db.models import F
@@ -349,10 +348,7 @@ class SelectRelatedTests(EnableIdentityMapMixin, TestCase):
         bio_field = Author._meta.get_field('bio')
         with self.assertNumQueries(0):
             self.assertIs(book.first_time_authors.all()[0], jane)
-            if django.VERSION < (2, 0):
-                self.assertIsNone(getattr(jane, bio_field.get_cache_name()))
-            else:
-                self.assertIsNone(bio_field.get_cached_value(jane))
+            self.assertIsNone(bio_field.get_cached_value(jane))
 
     @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_select_related_with_annotation(self, identity_map):
