@@ -2,7 +2,6 @@ from collections import defaultdict
 from weakref import WeakValueDictionary
 
 import wrapt
-from future.builtins import super
 
 
 class PrefetchIdentityMap(defaultdict):

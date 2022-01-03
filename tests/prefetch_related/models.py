@@ -7,7 +7,6 @@ from django.db import models
 from django.db.models.query import ModelIterable
 from django.db.models.query import QuerySet
 from django.utils.functional import cached_property
-from future.builtins import super
 
 
 class Author(models.Model):
