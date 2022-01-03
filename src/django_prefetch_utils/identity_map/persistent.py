@@ -4,11 +4,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import threading
+from contextlib import ContextDecorator
 from functools import partial
 
 import wrapt
 from django.db.models.query import QuerySet
-from django.utils.decorators import ContextDecorator
 
 from django_prefetch_utils.identity_map import get_default_prefetch_identity_map
 from django_prefetch_utils.identity_map import prefetch_related_objects_impl

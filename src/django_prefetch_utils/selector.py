@@ -38,10 +38,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import threading
+from contextlib import ContextDecorator
 
 import django.db.models.query
 from django.db.models.query import prefetch_related_objects as original_prefetch_related_objects
-from django.utils.decorators import ContextDecorator
+
 
 _active = threading.local()
 
