@@ -1,3 +1,5 @@
+USE_TZ = False
+
 SECRET_KEY = 'roverdotcom'
 INSTALLED_APPS = [
     'django.contrib.contenttypes',

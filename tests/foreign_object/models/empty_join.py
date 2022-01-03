@@ -1,3 +1,4 @@
+import django
 from django.db import models
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.fields.related import ReverseManyToOneDescriptor
@@ -44,10 +45,16 @@ class StartsWithRelation(models.ForeignObject):
         """
         return self.remote_field
 
-    def get_extra_restriction(self, where_class, alias, related_alias):
-        to_field = self.remote_field.model._meta.get_field(self.to_fields[0])
-        from_field = self.model._meta.get_field(self.from_fields[0])
-        return StartsWith(to_field.get_col(alias), from_field.get_col(related_alias))
+    if django.VERSION < (4, 0):
+        def get_extra_restriction(self, where_class, alias, related_alias):
+            to_field = self.remote_field.model._meta.get_field(self.to_fields[0])
+            from_field = self.model._meta.get_field(self.from_fields[0])
+            return StartsWith(to_field.get_col(alias), from_field.get_col(related_alias))
+    else:
+        def get_extra_restriction(self, alias, related_alias):
+            to_field = self.remote_field.model._meta.get_field(self.to_fields[0])
+            from_field = self.model._meta.get_field(self.from_fields[0])
+            return StartsWith(to_field.get_col(alias), from_field.get_col(related_alias))
 
     def get_joining_columns(self, reverse_join=False):
         return ()
@@ -88,8 +95,12 @@ class BrokenContainsRelation(StartsWithRelation):
     This model is designed to yield no join conditions and
     raise an exception in ``Join.as_sql()``.
     """
-    def get_extra_restriction(self, where_class, alias, related_alias):
-        return None
+    if django.VERSION < (4, 0):
+        def get_extra_restriction(self, where_class, alias, related_alias):
+            return None
+    else:
+        def get_extra_restriction(self, alias, related_alias):
+            return None
 
 
 class SlugPage(models.Model):
