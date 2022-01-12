@@ -28,9 +28,9 @@ Overview
     :alt: PyPI Package latest release
     :target: https://pypi.org/project/django-prefetch-utils
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/roverdotcom/django-prefetch-utils/v0.1.0.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/roverdotcom/django-prefetch-utils/v0.2.0.svg
     :alt: Commits since latest release
-    :target: https://github.com/roverdotcom/django-prefetch-utils/compare/v0.1.0...master
+    :target: https://github.com/roverdotcom/django-prefetch-utils/compare/v0.2.0...master
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/django-prefetch-utils.svg
     :alt: PyPI Wheel

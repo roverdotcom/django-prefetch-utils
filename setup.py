@@ -19,7 +19,7 @@ def read(*names, **kwargs):
 
 setup(
     name="django-prefetch-utils",
-    version="0.1.0",
+    version="0.2.0",
     license="BSD 3-Clause License",
     description="An library of utilities and enhancements for Django's prefetch_related system.",
     long_description="%s\n%s"
