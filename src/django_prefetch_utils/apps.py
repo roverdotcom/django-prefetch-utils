@@ -8,12 +8,14 @@ class DjangoPrefetchUtilsAppConfig(AppConfig):
 
     def ready(self):
         from django_prefetch_utils.selector import enable_prefetch_related_objects_selector
+
         enable_prefetch_related_objects_selector()
         self.set_default_prefetch_related_objects_implementation()
 
     def set_default_prefetch_related_objects_implementation(self):
         from django_prefetch_utils.selector import set_default_prefetch_related_objects
-        selected = getattr(settings, 'PREFETCH_UTILS_DEFAULT_IMPLEMENTATION', None)
+
+        selected = getattr(settings, "PREFETCH_UTILS_DEFAULT_IMPLEMENTATION", None)
         if selected is None:
             return
 

@@ -25,6 +25,7 @@ class PrefetchIdentityMap(defaultdict):
     :class:`weakref.WeakValueDictionary` mapping primary keys to the
     associated Django model instance.
     """
+
     def __init__(self):
         super().__init__(WeakValueDictionary)
 
@@ -56,6 +57,7 @@ class RelObjAttrMemoizingIdentityMap(wrapt.ObjectProxy):
     on the related object returned from the prefetcher which is not present
     on the equivalent object in the identity map.
     """
+
     __slots__ = ("_self_rel_obj_attr", "_self_memo")
 
     def __init__(self, rel_obj_attr, wrapped):
@@ -92,7 +94,7 @@ class AnnotatingIdentityMap(wrapt.ObjectProxy):
 
 
 class SelectRelatedIdentityMap(wrapt.ObjectProxy):
-    __slots__ = ("_self_select_related", )
+    __slots__ = ("_self_select_related",)
     MISSING = object()
 
     def __init__(self, select_related, wrapped):
@@ -117,19 +119,11 @@ class SelectRelatedIdentityMap(wrapt.ObjectProxy):
 
             target_obj = self.__wrapped__[source_obj]
             self.set_cached_value(field, target, target_obj)
-            self.transfer_select_related(
-                sub_select_related,
-                source=source_obj,
-                target=target_obj
-            )
+            self.transfer_select_related(sub_select_related, source=source_obj, target=target_obj)
 
     def __getitem__(self, obj):
         new_obj = self.__wrapped__[obj]
-        self.transfer_select_related(
-            self._self_select_related,
-            source=obj,
-            target=new_obj
-        )
+        self.transfer_select_related(self._self_select_related, source=obj, target=new_obj)
         return new_obj
 
 
@@ -137,7 +131,8 @@ class ExtraIdentityMap(wrapt.ObjectProxy):
     """
     This identity map wrapper
     """
-    __slots__ = ("_self_extra", )
+
+    __slots__ = ("_self_extra",)
 
     def __init__(self, extra, wrapped):
         super().__init__(wrapped)

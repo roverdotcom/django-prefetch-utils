@@ -16,6 +16,7 @@ class RelatedQuerySetDescriptorViaLookupBase(GenericPrefetchRelatedDescriptor):
     specified by a Django "lookup" which specifies the path from the
     related object to the model on which the descriptor is defined.
     """
+
     @abc.abstractproperty
     def lookup(self):
         """
@@ -35,7 +36,7 @@ class RelatedQuerySetDescriptorViaLookupBase(GenericPrefetchRelatedDescriptor):
 
         :rtype: str
         """
-        return '_{}_'.format(type(self).__name__.lower())
+        return "_{}_".format(type(self).__name__.lower())
 
     def filter_queryset_for_instances(self, queryset, instances):
         """
@@ -48,9 +49,7 @@ class RelatedQuerySetDescriptorViaLookupBase(GenericPrefetchRelatedDescriptor):
         :param QuerySet queryset: the queryset to filter for *instances*
         :rtype: :class:`django.db.models.QuerySet`
         """
-        return queryset.filter(**{
-            '{}__in'.format(self.lookup): [obj.pk for obj in instances]
-        })
+        return queryset.filter(**{"{}__in".format(self.lookup): [obj.pk for obj in instances]})
 
     def update_queryset_for_prefetching(self, queryset):
         """
@@ -64,9 +63,7 @@ class RelatedQuerySetDescriptorViaLookupBase(GenericPrefetchRelatedDescriptor):
         :rtype: :class:`django.db.models.QuerySet`
         """
         queryset = super().update_queryset_for_prefetching(queryset)
-        return queryset.annotate(**{
-            self.obj_pk_annotation: F(self.lookup)
-        })
+        return queryset.annotate(**{self.obj_pk_annotation: F(self.lookup)})
 
     def get_join_value_for_instance(self, instance):
         """
@@ -113,6 +110,7 @@ class RelatedQuerySetDescriptorViaLookup(RelatedQuerySetDescriptorViaLookupBase)
     The lookup specifies the path from the related object to the model
     on which the descriptor is defined.
     """
+
     def __init__(self, prefetch_model, lookup):
         self._prefetch_model = prefetch_model
         self._lookup = lookup
@@ -128,8 +126,8 @@ class RelatedQuerySetDescriptorViaLookup(RelatedQuerySetDescriptorViaLookupBase)
 
 
 class RelatedSingleObjectDescriptorViaLookup(
-        GenericSinglePrefetchRelatedDescriptorMixin,
-        RelatedQuerySetDescriptorViaLookup):
+    GenericSinglePrefetchRelatedDescriptorMixin, RelatedQuerySetDescriptorViaLookup
+):
     """
     This provides a descriptor for access to a related object where the
     relationship to the instances on which this descriptor is

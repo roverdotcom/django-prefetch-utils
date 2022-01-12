@@ -10,9 +10,7 @@ from .mixins import GenericSingleObjectDescriptorTestCaseMixin
 from .models import ReaderWithAuthorsRead
 
 
-class RelatedQuerySetDescriptorViaLookupTests(
-        GenericQuerySetDescriptorTestCaseMixin,
-        TestCase):
+class RelatedQuerySetDescriptorViaLookupTests(GenericQuerySetDescriptorTestCaseMixin, TestCase):
 
     descriptor_class = RelatedQuerySetDescriptorViaLookup
 
@@ -29,10 +27,10 @@ class RelatedQuerySetDescriptorViaLookupTests(
 
     @property
     def attr(self):
-        return 'authors_read'
+        return "authors_read"
 
     def test_lookup(self):
-        self.assertEqual(self.descriptor.lookup, 'books__read_by')
+        self.assertEqual(self.descriptor.lookup, "books__read_by")
 
     def test_get_prefetch_model_class(self):
         self.assertEqual(self.descriptor.get_prefetch_model_class(), Author)
@@ -41,12 +39,10 @@ class RelatedQuerySetDescriptorViaLookupTests(
         return [self.author]
 
 
-class RelatedSingleObjectDescriptorViaLookupTests(
-        GenericSingleObjectDescriptorTestCaseMixin,
-        TestCase):
+class RelatedSingleObjectDescriptorViaLookupTests(GenericSingleObjectDescriptorTestCaseMixin, TestCase):
 
     descriptor_class = RelatedSingleObjectDescriptorViaLookup
-    attr = 'an_author_read'
+    attr = "an_author_read"
 
     @classmethod
     def setUpTestData(cls):
@@ -64,7 +60,7 @@ class RelatedSingleObjectDescriptorViaLookupTests(
         return self.author
 
     def test_lookup(self):
-        self.assertEqual(self.descriptor.lookup, 'books__read_by')
+        self.assertEqual(self.descriptor.lookup, "books__read_by")
 
     def test_get_prefetch_model_class(self):
         self.assertEqual(self.descriptor.get_prefetch_model_class(), Author)

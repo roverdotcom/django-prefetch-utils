@@ -26,9 +26,7 @@ class ForwardDescriptorTestsMixin(EnableIdentityMapMixin):
     def setUpTestData(cls):
         cls.book = Book.objects.create(title="Poems")
         cls.author = Author.objects.create(name="Jane", first_book=cls.book)
-        cls.bio = cls.bio_class.objects.create(
-            **cls.create_bio_kwargs(author=cls.author)
-        )
+        cls.bio = cls.bio_class.objects.create(**cls.create_bio_kwargs(author=cls.author))
 
     @classmethod
     def create_bio_kwargs(cls, **kwargs):
@@ -39,14 +37,14 @@ class ForwardDescriptorTestsMixin(EnableIdentityMapMixin):
             return
 
         with self.assertNumQueries(2):
-            bio = self.bio_class.objects.prefetch_related('author').first()
+            bio = self.bio_class.objects.prefetch_related("author").first()
             self.assertIs(getattr(bio.author, self.reverse_attr), bio)
 
     @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_no_additional_queries_if_related_object_in_identity_map(self, identity_map):
         author = identity_map[Author.objects.first()]
         with self.assertNumQueries(1):
-            bio = self.bio_class.objects.prefetch_related('author').first()
+            bio = self.bio_class.objects.prefetch_related("author").first()
             self.assertIs(bio.author, author)
 
     @use_persistent_prefetch_identity_map(pass_identity_map=True)
@@ -56,10 +54,7 @@ class ForwardDescriptorTestsMixin(EnableIdentityMapMixin):
         author = identity_map[Author.objects.first()]
         with self.assertNumQueries(2):
             bio = self.bio_class.objects.prefetch_related(
-                Prefetch(
-                    'author',
-                    queryset=Author.objects.annotate(double_id=2 * F('id'))
-                )
+                Prefetch("author", queryset=Author.objects.annotate(double_id=2 * F("id")))
             ).first()
         self.assertIs(bio.author, author)
         self.assertEqual(bio.author.double_id, 2 * author.id)
@@ -71,10 +66,7 @@ class ForwardDescriptorTestsMixin(EnableIdentityMapMixin):
         author = identity_map[Author.objects.first()]
         with self.assertNumQueries(2):
             bio = self.bio_class.objects.prefetch_related(
-                Prefetch(
-                    'author',
-                    queryset=Author.objects.select_related('first_book')
-                )
+                Prefetch("author", queryset=Author.objects.select_related("first_book"))
             ).first()
 
         # Check to make sure that the author is the one in the identity
@@ -86,12 +78,12 @@ class ForwardDescriptorTestsMixin(EnableIdentityMapMixin):
 
 class ForwardDescriptorTests(ForwardDescriptorTestsMixin, TestCase):
     bio_class = DirectBio
-    reverse_attr = 'direct_bio'
+    reverse_attr = "direct_bio"
 
 
 class ForwardDescriptorWithToFieldTests(ForwardDescriptorTestsMixin, TestCase):
     bio_class = Bio
-    reverse_attr = 'bio'
+    reverse_attr = "bio"
 
 
 class ForwardDescriptorManyToOneTests(ForwardDescriptorTestsMixin, TestCase):
@@ -99,7 +91,7 @@ class ForwardDescriptorManyToOneTests(ForwardDescriptorTestsMixin, TestCase):
 
     @classmethod
     def create_bio_kwargs(cls, **kwargs):
-        return dict({'year': 2019}, **kwargs)
+        return dict({"year": 2019}, **kwargs)
 
 
 class ReverseOneToOneTests(EnableIdentityMapMixin, TestCase):
@@ -107,14 +99,11 @@ class ReverseOneToOneTests(EnableIdentityMapMixin, TestCase):
     def setUpTestData(cls):
         cls.book = Book.objects.create(title="Poems")
         cls.author = Author.objects.create(name="Jane", first_book=cls.book)
-        cls.bio = Bio.objects.create(
-            author=cls.author,
-            best_book=cls.book,
-        )
+        cls.bio = Bio.objects.create(author=cls.author, best_book=cls.book)
 
     def test_reverse_is_correctly_set(self):
         with self.assertNumQueries(2):
-            author = Author.objects.prefetch_related('bio').first()
+            author = Author.objects.prefetch_related("bio").first()
             self.assertIs(author.bio.author, author)
 
     @use_persistent_prefetch_identity_map(pass_identity_map=True)
@@ -123,10 +112,7 @@ class ReverseOneToOneTests(EnableIdentityMapMixin, TestCase):
         # if the prefetched object already exists in the identity map
         bio = identity_map[Bio.objects.first()]
         author = Author.objects.prefetch_related(
-            Prefetch(
-                'bio',
-                queryset=Bio.objects.annotate(double_id=2 * F('best_book_id'))
-            )
+            Prefetch("bio", queryset=Bio.objects.annotate(double_id=2 * F("best_book_id")))
         ).first()
         self.assertIs(author.bio, bio)
         self.assertEqual(author.bio.double_id, 2 * bio.best_book_id)
@@ -137,10 +123,7 @@ class ReverseOneToOneTests(EnableIdentityMapMixin, TestCase):
         # if the prefetched object already exists in the identity map
         bio = identity_map[Bio.objects.first()]
         author = Author.objects.prefetch_related(
-            Prefetch(
-                'bio',
-                queryset=Bio.objects.select_related('best_book')
-            )
+            Prefetch("bio", queryset=Bio.objects.select_related("best_book"))
         ).first()
 
         # Check to make sure that the author is the one in the identity
@@ -155,14 +138,11 @@ class ReverseManyToOneTests(EnableIdentityMapMixin, TestCase):
     def setUpTestData(cls):
         cls.book = Book.objects.create(title="Poems")
         cls.author = Author.objects.create(name="Jane", first_book=cls.book)
-        cls.bio = Bio.objects.create(
-            author=cls.author,
-            best_book=cls.book,
-        )
+        cls.bio = Bio.objects.create(author=cls.author, best_book=cls.book)
 
     def test_reverse_is_correctly_set(self):
         with self.assertNumQueries(2):
-            book = Book.objects.prefetch_related('first_time_authors').first()
+            book = Book.objects.prefetch_related("first_time_authors").first()
             self.assertIs(book.first_time_authors.all()[0].first_book, book)
 
     @use_persistent_prefetch_identity_map(pass_identity_map=True)
@@ -171,10 +151,7 @@ class ReverseManyToOneTests(EnableIdentityMapMixin, TestCase):
         # if the prefetched object already exists in the identity map
         author = identity_map[Author.objects.first()]
         book = Book.objects.prefetch_related(
-            Prefetch(
-                'first_time_authors',
-                queryset=Author.objects.annotate(double_id=2 * F('id'))
-            )
+            Prefetch("first_time_authors", queryset=Author.objects.annotate(double_id=2 * F("id")))
         ).first()
         self.assertIs(book.first_time_authors.all()[0], author)
         self.assertEqual(author.double_id, 2 * author.id)
@@ -185,10 +162,7 @@ class ReverseManyToOneTests(EnableIdentityMapMixin, TestCase):
         # if the prefetched object already exists in the identity map
         author = identity_map[Author.objects.first()]
         book = Book.objects.prefetch_related(
-            Prefetch(
-                'first_time_authors',
-                queryset=Author.objects.select_related('bio')
-            )
+            Prefetch("first_time_authors", queryset=Author.objects.select_related("bio"))
         ).first()
 
         # Check to make sure that the author is the one in the identity
@@ -203,14 +177,8 @@ class ManyToManyDescriptorTests(EnableIdentityMapMixin, TestCase):
     def setUpTestData(cls):
         cls.book = Book.objects.create(title="Poems")
         cls.jane = Author.objects.create(name="Jane", first_book=cls.book)
-        cls.charlotte = Author.objects.create(
-            name="Charlotte",
-            first_book=cls.book
-        )
-        FavoriteAuthors.objects.create(
-            author=cls.jane,
-            likes_author=cls.charlotte
-        )
+        cls.charlotte = Author.objects.create(name="Charlotte", first_book=cls.book)
+        FavoriteAuthors.objects.create(author=cls.jane, likes_author=cls.charlotte)
 
     @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_annotations(self, identity_map):
@@ -218,10 +186,7 @@ class ManyToManyDescriptorTests(EnableIdentityMapMixin, TestCase):
         # if the prefetched object already exists in the identity map
         favorite = identity_map[Author.objects.get(id=self.charlotte.id)]
         author = Author.objects.prefetch_related(
-            Prefetch(
-                'favorite_authors',
-                queryset=Author.objects.annotate(double_id=2 * F('id'))
-            )
+            Prefetch("favorite_authors", queryset=Author.objects.annotate(double_id=2 * F("id")))
         ).get(id=self.jane.id)
         self.assertIs(author.favorite_authors.all()[0], favorite)
         self.assertEqual(favorite.double_id, 2 * favorite.id)
@@ -232,10 +197,7 @@ class ManyToManyDescriptorTests(EnableIdentityMapMixin, TestCase):
         # if the prefetched object already exists in the identity map
         favorite = identity_map[Author.objects.get(id=self.charlotte.id)]
         author = Author.objects.prefetch_related(
-            Prefetch(
-                'favorite_authors',
-                queryset=Author.objects.select_related('first_book')
-            )
+            Prefetch("favorite_authors", queryset=Author.objects.select_related("first_book"))
         ).get(id=self.jane.id)
 
         # Check to make sure that the author is the one in the identity
@@ -248,53 +210,43 @@ class ManyToManyDescriptorTests(EnableIdentityMapMixin, TestCase):
 class GenericForeignKeyTests(EnableIdentityMapMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.person = Person.objects.create(name='Jane')
-        cls.bookmark = Bookmark.objects.create(url='https://www.rover.com')
-        cls.bookmark2 = Bookmark.objects.create(url='https://www.rover.com/blog/')
+        cls.person = Person.objects.create(name="Jane")
+        cls.bookmark = Bookmark.objects.create(url="https://www.rover.com")
+        cls.bookmark2 = Bookmark.objects.create(url="https://www.rover.com/blog/")
         cls.tagged_item = TaggedItem.objects.create(
-            content_object=cls.bookmark,
-            created_by=cls.person,
-            favorite=cls.person,
+            content_object=cls.bookmark, created_by=cls.person, favorite=cls.person
         )
         cls.tagged_item2 = TaggedItem.objects.create(
-            content_object=cls.bookmark2,
-            created_by=cls.person,
-            favorite=cls.person,
+            content_object=cls.bookmark2, created_by=cls.person, favorite=cls.person
         )
 
     @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_identity_map_works_with_generic_foreign_keys(self, identity_map):
         bookmark = identity_map[Bookmark.objects.first()]
         with self.assertNumQueries(1):
-            tagged_item = TaggedItem.objects.prefetch_related(
-                'content_object'
-            ).first()
+            tagged_item = TaggedItem.objects.prefetch_related("content_object").first()
             self.assertIs(tagged_item.content_object, bookmark)
 
     @use_persistent_prefetch_identity_map(pass_identity_map=True)
     def test_identity_map_works_with_partially_fetched(self, identity_map):
         bookmark = identity_map[Bookmark.objects.first()]
         with self.assertNumQueries(2):
-            tagged_items = list(TaggedItem.objects.prefetch_related('content_object'))
+            tagged_items = list(TaggedItem.objects.prefetch_related("content_object"))
             self.assertIs(tagged_items[0].content_object, bookmark)
 
 
 class GenericRelationTests(EnableIdentityMapMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.person = Person.objects.create(name='Jane')
-        cls.bookmark = Bookmark.objects.create(url='https://www.rover.com')
+        cls.person = Person.objects.create(name="Jane")
+        cls.bookmark = Bookmark.objects.create(url="https://www.rover.com")
         cls.tagged_item = TaggedItem.objects.create(
-            content_object=cls.bookmark,
-            created_by=cls.person,
-            favorite=cls.person,
+            content_object=cls.bookmark, created_by=cls.person, favorite=cls.person
         )
 
     def test_reverse_is_correctly_set(self):
         with self.assertNumQueries(2):
-            bookmark = Bookmark.objects.prefetch_related(
-                'tags__content_object'
-            ).first()
+            bookmark = Bookmark.objects.prefetch_related("tags__content_object").first()
             self.assertIs(bookmark.tags.all()[0].content_object, bookmark)
 
     @use_persistent_prefetch_identity_map(pass_identity_map=True)
@@ -303,10 +255,7 @@ class GenericRelationTests(EnableIdentityMapMixin, TestCase):
         # if the prefetched object already exists in the identity map
         tagged_item = identity_map[TaggedItem.objects.first()]
         bookmark = Bookmark.objects.prefetch_related(
-            Prefetch(
-                'tags',
-                queryset=TaggedItem.objects.annotate(double_id=2 * F('id'))
-            )
+            Prefetch("tags", queryset=TaggedItem.objects.annotate(double_id=2 * F("id")))
         ).first()
         self.assertIs(bookmark.tags.all()[0], tagged_item)
         self.assertEqual(tagged_item.double_id, 2 * tagged_item.id)
@@ -315,17 +264,11 @@ class GenericRelationTests(EnableIdentityMapMixin, TestCase):
     def test_select_related(self, identity_map):
         tagged_item = identity_map[TaggedItem.objects.first()]
         bookmark = Bookmark.objects.prefetch_related(
-            Prefetch(
-                'tags',
-                queryset=TaggedItem.objects.select_related('favorite_ct')
-            )
+            Prefetch("tags", queryset=TaggedItem.objects.select_related("favorite_ct"))
         ).first()
         self.assertIs(bookmark.tags.all()[0], tagged_item)
         with self.assertNumQueries(0):
-            self.assertEqual(
-                tagged_item.favorite_ct,
-                ContentType.objects.get_for_model(Person)
-            )
+            self.assertEqual(tagged_item.favorite_ct, ContentType.objects.get_for_model(Person))
 
 
 class SelectRelatedTests(EnableIdentityMapMixin, TestCase):
@@ -339,13 +282,10 @@ class SelectRelatedTests(EnableIdentityMapMixin, TestCase):
         jane = identity_map[self.jane]
         with self.assertNumQueries(2):
             book = Book.objects.prefetch_related(
-                Prefetch(
-                    'first_time_authors',
-                    queryset=Author.objects.select_related('bio')
-                )
+                Prefetch("first_time_authors", queryset=Author.objects.select_related("bio"))
             ).first()
 
-        bio_field = Author._meta.get_field('bio')
+        bio_field = Author._meta.get_field("bio")
         with self.assertNumQueries(0):
             self.assertIs(book.first_time_authors.all()[0], jane)
             self.assertIsNone(bio_field.get_cached_value(jane))
@@ -359,12 +299,8 @@ class SelectRelatedTests(EnableIdentityMapMixin, TestCase):
         with self.assertNumQueries(2):
             book = Book.objects.prefetch_related(
                 Prefetch(
-                    'authors',
-                    queryset=Author.objects.select_related(
-                        'bio'
-                    ).annotate(
-                        total_books=Count('books')
-                    ).order_by('id')
+                    "authors",
+                    queryset=Author.objects.select_related("bio").annotate(total_books=Count("books")).order_by("id"),
                 )
             ).first()
 
@@ -384,17 +320,14 @@ class PrefetchCompositionTests(EnableIdentityMapMixin, TestCase):
     def test_prefetching_works_in_cases_where_promotion_would_be_needed(self):
         queryset = Book.objects.prefetch_related(
             Prefetch(
-                'first_time_authors',
+                "first_time_authors",
                 queryset=Author.objects.prefetch_related(
-                    Prefetch(
-                        'first_book',
-                        queryset=Book.objects.prefetch_related('authors')
-                    )
-                )
+                    Prefetch("first_book", queryset=Book.objects.prefetch_related("authors"))
+                ),
             )
         )
         with self.assertNumQueries(3):
-            book, = list(queryset)
+            (book,) = list(queryset)
 
         with self.assertNumQueries(0):
             self.assertIs(book, book.first_time_authors.all()[0].first_book)

@@ -22,6 +22,7 @@ class FetchAllDescriptor(object):
     This descriptor replaces ``QuerySet._fetch_all`` and applies
     an identity map to any objects fetched in a queryset.
     """
+
     def __get__(self, queryset, type=None):
         if queryset is None:
             return self
@@ -34,9 +35,7 @@ class FetchAllDescriptor(object):
 
         identity_map = wrap_identity_map_for_queryset(identity_map, queryset)
         if queryset._result_cache is None:
-            queryset._result_cache = [
-                identity_map[obj] for obj in queryset._iterable_class(queryset)
-            ]
+            queryset._result_cache = [identity_map[obj] for obj in queryset._iterable_class(queryset)]
         if queryset._prefetch_related_lookups and not queryset._prefetch_done:
             queryset._prefetch_related_objects()
 
@@ -72,6 +71,7 @@ class use_persistent_prefetch_identity_map(ContextDecorator):
                toys = list(Toy.objects.prefetch_related("dog"))
 
     """
+
     previous_active = None
     override_context_decorator = None
 
@@ -88,7 +88,7 @@ class use_persistent_prefetch_identity_map(ContextDecorator):
         else:
             identity_map = get_default_prefetch_identity_map()
         enable_fetch_all_descriptor()
-        self.previous_active = getattr(_active, 'value', None)
+        self.previous_active = getattr(_active, "value", None)
         _active.value = identity_map
         self.override_context_decorator = override_prefetch_related_objects(
             partial(prefetch_related_objects_impl, identity_map)
@@ -109,4 +109,5 @@ class use_persistent_prefetch_identity_map(ContextDecorator):
                 if self.pass_identity_map:
                     args = (identity_map,) + args
                 return wrapped(*args, **kwargs)
+
         return wrapper(func)

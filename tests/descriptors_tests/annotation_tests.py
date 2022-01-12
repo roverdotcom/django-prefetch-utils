@@ -7,13 +7,11 @@ from .mixins import GenericSingleObjectDescriptorTestCaseMixin
 from .models import BookWithAuthorCount
 
 
-class AnnotationDescriptorTests(
-        GenericSingleObjectDescriptorTestCaseMixin,
-        TestCase):
+class AnnotationDescriptorTests(GenericSingleObjectDescriptorTestCaseMixin, TestCase):
 
     supports_custom_querysets = False
     descriptor_class = AnnotationDescriptor
-    attr = 'authors_count'
+    attr = "authors_count"
 
     @classmethod
     def setUpTestData(cls):

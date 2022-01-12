@@ -10,9 +10,7 @@ from .base import GenericPrefetchRelatedDescriptor
 from .base import GenericSinglePrefetchRelatedDescriptorMixin
 
 
-class TopChildDescriptor(
-        GenericSinglePrefetchRelatedDescriptorMixin,
-        GenericPrefetchRelatedDescriptor):
+class TopChildDescriptor(GenericSinglePrefetchRelatedDescriptorMixin, GenericPrefetchRelatedDescriptor):
     """
     An abstract class for creating prefetchable descriptors which correspond
     to the top child in a group of children associated to a parent model.
@@ -22,6 +20,7 @@ class TopChildDescriptor(
     the parent would be the conversation.  The ordering used to determine
     the "top child" would be ``-added``.
     """
+
     @abc.abstractmethod
     def get_child_model(self):
         """
@@ -84,9 +83,7 @@ class TopChildDescriptor(
         :param dict kwargs: any overrides for the default filter
         :rtype: dict
         """
-        return dict({
-            self.get_parent_relation(): models.OuterRef('pk')
-        }, **kwargs)
+        return dict({self.get_parent_relation(): models.OuterRef("pk")}, **kwargs)
 
     def get_subquery(self):
         """
@@ -95,12 +92,12 @@ class TopChildDescriptor(
 
         :rtype: :class:`queryset`
         """
-        return self.get_child_model().objects.filter(
-            *self.get_child_filter_args(),
-            **self.get_child_filter_kwargs()
-        ).order_by(
-            *self.get_child_order_by()
-        ).values_list('pk', flat=True)
+        return (
+            self.get_child_model()
+            .objects.filter(*self.get_child_filter_args(), **self.get_child_filter_kwargs())
+            .order_by(*self.get_child_order_by())
+            .values_list("pk", flat=True)
+        )
 
     def get_top_child_pks(self, parent_pks):
         """
@@ -111,14 +108,12 @@ class TopChildDescriptor(
            models whose children we want to fetch.
         :rtype: :class:`QuerySet`
         """
-        return self.get_parent_model().objects.annotate(
-            top_child_pk=models.Subquery(
-                self.get_subquery()[:1],
-                output_field=models.IntegerField()
-            )
-        ).filter(
-            pk__in=parent_pks
-        ).values_list('top_child_pk', flat=True)
+        return (
+            self.get_parent_model()
+            .objects.annotate(top_child_pk=models.Subquery(self.get_subquery()[:1], output_field=models.IntegerField()))
+            .filter(pk__in=parent_pks)
+            .values_list("top_child_pk", flat=True)
+        )
 
     @cached_property
     def parent_pk_annotation(self):
@@ -129,7 +124,7 @@ class TopChildDescriptor(
 
         :rtype: str
         """
-        return '_{}_'.format(type(self).__name__.lower())
+        return "_{}_".format(type(self).__name__.lower())
 
     def filter_queryset_for_instances(self, queryset, instances):
         """
@@ -149,11 +144,9 @@ class TopChildDescriptor(
         :rtype: :class:`django.db.models.QuerySet`
         """
         parent_pks = [obj.pk for obj in instances]
-        return queryset.filter(
-            pk__in=list(self.get_top_child_pks(parent_pks))
-        ).annotate(**{
-            self.parent_pk_annotation: F(self.get_parent_relation())
-        })
+        return queryset.filter(pk__in=list(self.get_top_child_pks(parent_pks))).annotate(
+            **{self.parent_pk_annotation: F(self.get_parent_relation())}
+        )
 
     def get_join_value_for_related_obj(self, child):
         """
@@ -182,6 +175,7 @@ class TopChildDescriptorFromFieldBase(TopChildDescriptor):
     case, anyone implementing a subclass of this only needs to
     implement :meth:`get_child_field`.
     """
+
     @abc.abstractmethod
     def get_child_field(self):
         """
@@ -213,7 +207,7 @@ class TopChildDescriptorFromField(TopChildDescriptorFromFieldBase):
 
     def get_child_field(self):
         if isinstance(self._field, str):
-            model_string, field_name = self._field.rsplit('.', 1)
+            model_string, field_name = self._field.rsplit(".", 1)
             model = apps.get_model(model_string)
             self._field = model._meta.get_field(field_name)
         return self._field
@@ -228,6 +222,7 @@ class TopChildDescriptorFromGenericRelationBase(TopChildDescriptor):
     are described by a
     :class:`django.contrib.contenttypes.fields.GenericRelation`.
     """
+
     @abc.abstractmethod
     def get_child_field(self):
         """
@@ -276,9 +271,7 @@ class TopChildDescriptorFromGenericRelationBase(TopChildDescriptor):
 
         :rtype: :class:`django.db.models.QuerySet`
         """
-        return queryset.filter(**{
-            self.child_field.content_type_field_name: self.content_type.id
-        })
+        return queryset.filter(**{self.child_field.content_type_field_name: self.content_type.id})
 
     def get_queryset(self, queryset=None):
         """
@@ -301,8 +294,7 @@ class TopChildDescriptorFromGenericRelationBase(TopChildDescriptor):
         return self.apply_content_type_filter(subquery)
 
 
-class TopChildDescriptorFromGenericRelation(
-        TopChildDescriptorFromGenericRelationBase):
+class TopChildDescriptorFromGenericRelation(TopChildDescriptorFromGenericRelationBase):
     """
     For further customization,
     """

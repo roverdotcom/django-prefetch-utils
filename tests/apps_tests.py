@@ -18,18 +18,12 @@ class DjangoPrefetchUtilsAppConfigTests(TestCase):
     )
     def test_default_from_string(self):
         self.config.set_default_prefetch_related_objects_implementation()
-        self.assertIs(
-            get_prefetch_related_objects(), identity_map_prefetch_related_objects
-        )
+        self.assertIs(get_prefetch_related_objects(), identity_map_prefetch_related_objects)
 
-    @override_settings(
-        PREFETCH_UTILS_DEFAULT_IMPLEMENTATION=identity_map_prefetch_related_objects
-    )
+    @override_settings(PREFETCH_UTILS_DEFAULT_IMPLEMENTATION=identity_map_prefetch_related_objects)
     def test_default_from_object(self):
         self.config.set_default_prefetch_related_objects_implementation()
-        self.assertIs(
-            get_prefetch_related_objects(), identity_map_prefetch_related_objects
-        )
+        self.assertIs(get_prefetch_related_objects(), identity_map_prefetch_related_objects)
 
     @override_settings(PREFETCH_UTILS_DEFAULT_IMPLEMENTATION=None)
     def test_default_no_setting(self):

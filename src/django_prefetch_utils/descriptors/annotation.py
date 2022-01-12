@@ -4,9 +4,7 @@ from .base import GenericPrefetchRelatedDescriptor
 from .base import GenericSinglePrefetchRelatedDescriptorMixin
 
 
-class AnnotationDescriptor(
-        GenericSinglePrefetchRelatedDescriptorMixin,
-        GenericPrefetchRelatedDescriptor):
+class AnnotationDescriptor(GenericSinglePrefetchRelatedDescriptorMixin, GenericPrefetchRelatedDescriptor):
     """
     This descriptor behaves like an annotated value would appear
     on a model.  It lets you turn an annotation into a prefetch at
@@ -26,6 +24,7 @@ class AnnotationDescriptor(
     It works by storing a ``values_list`` tuple containing the annotated value
     on :attr:`cache_name` on the object.
     """
+
     def __init__(self, annotation):
         self.annotation = annotation
 
@@ -48,7 +47,7 @@ class AnnotationDescriptor(
 
         :rtype: str
         """
-        return '_prefetched_{}'.format(self.name)
+        return "_prefetched_{}".format(self.name)
 
     def __get__(self, obj, type=None):
         if obj is None:
@@ -71,11 +70,11 @@ class AnnotationDescriptor(
         :param QuerySet queryset: the queryset to filter for *instances*
         :rtype: :class:`django.db.models.QuerySet`
         """
-        queryset = queryset.filter(
-            pk__in=[obj.pk for obj in instances]
-        ).annotate(**{
-            self.name: self.annotation
-        }).values_list('pk', self.name)
+        queryset = (
+            queryset.filter(pk__in=[obj.pk for obj in instances])
+            .annotate(**{self.name: self.annotation})
+            .values_list("pk", self.name)
+        )
         return queryset
 
     def get_join_value_for_instance(self, instance):
