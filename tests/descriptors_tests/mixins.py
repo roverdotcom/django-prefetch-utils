@@ -54,10 +54,7 @@ class GenericPrefetchDescriptorTestCaseMixin(abc.ABC):
         self.assertIsInstance(self.descriptor, self.descriptor_class)
 
     def test_get_on_class_returns_descriptor(self):
-        self.assertIsInstance(
-            getattr(type(self.obj), self.attr),
-            type(self.descriptor)
-        )
+        self.assertIsInstance(getattr(type(self.obj), self.attr), type(self.descriptor))
 
 
 class GenericQuerySetDescriptorTestCaseMixin(GenericPrefetchDescriptorTestCaseMixin):
@@ -66,47 +63,28 @@ class GenericQuerySetDescriptorTestCaseMixin(GenericPrefetchDescriptorTestCaseMi
         return getattr(self.obj, self.attr)
 
     def test_expected_related_objects(self):
-        self.assertEqual(
-            sorted(self.manager.all()),
-            sorted(self.get_expected_related_objects())
-        )
+        self.assertEqual(sorted(self.manager.all()), sorted(self.get_expected_related_objects()))
 
     def test_get_on_instance_returns_manager(self):
-        self.assertIsInstance(
-            getattr(type(self.obj), self.attr),
-            type(self.descriptor)
-        )
+        self.assertIsInstance(getattr(type(self.obj), self.attr), type(self.descriptor))
 
     def test_get_prefetch_queryset_integration_test(self):
         prefetched_qs = getattr(self.fetch_obj(), self.attr).all()
         with self.assertNumQueries(0):
-            self.assertEqual(
-                sorted(prefetched_qs),
-                sorted(self.get_expected_related_objects())
-            )
+            self.assertEqual(sorted(prefetched_qs), sorted(self.get_expected_related_objects()))
 
     def test_get_prefetch_queryset_integration_test_custom_queryset(self):
-        custom_queryset = self.related_object_queryset.annotate(test_annotation=F('pk'))
-        obj = self.instance_queryset.prefetch_related(
-            Prefetch(
-                self.attr,
-                queryset=custom_queryset
-            )
-        ).get(pk=self.obj.pk)
+        custom_queryset = self.related_object_queryset.annotate(test_annotation=F("pk"))
+        obj = self.instance_queryset.prefetch_related(Prefetch(self.attr, queryset=custom_queryset)).get(pk=self.obj.pk)
         rel_qs = getattr(obj, self.attr).all()
         with self.assertNumQueries(0):
             prefetched_related_objects = sorted(rel_qs)
-            self.assertEqual(
-                prefetched_related_objects,
-                sorted(self.get_expected_related_objects()),
-            )
+            self.assertEqual(prefetched_related_objects, sorted(self.get_expected_related_objects()))
             for rel_obj in prefetched_related_objects:
                 self.assertEqual(rel_obj.test_annotation, rel_obj.pk)
 
 
-class GenericSingleObjectDescriptorTestCaseMixin(
-        GenericPrefetchDescriptorTestCaseMixin):
-
+class GenericSingleObjectDescriptorTestCaseMixin(GenericPrefetchDescriptorTestCaseMixin):
     @abc.abstractproperty
     def related_object(self):
         pass
@@ -140,13 +118,8 @@ class GenericSingleObjectDescriptorTestCaseMixin(
         if not self.supports_custom_querysets:
             return
 
-        custom_queryset = self.related_object_queryset.annotate(test_annotation=F('pk'))
-        obj = self.instance_queryset.prefetch_related(
-            Prefetch(
-                self.attr,
-                queryset=custom_queryset
-            )
-        ).get(pk=self.obj.pk)
+        custom_queryset = self.related_object_queryset.annotate(test_annotation=F("pk"))
+        obj = self.instance_queryset.prefetch_related(Prefetch(self.attr, queryset=custom_queryset)).get(pk=self.obj.pk)
         with self.assertNumQueries(0):
             rel_obj = getattr(obj, self.attr)
             self.assertEqual(rel_obj, self.related_object)

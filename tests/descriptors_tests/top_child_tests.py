@@ -10,21 +10,15 @@ from .models import BookWithAuthorCount
 from .models import Comment
 
 
-class TopChildDescriptorFromFieldTests(
-        GenericSingleObjectDescriptorTestCaseMixin,
-        TestCase):
+class TopChildDescriptorFromFieldTests(GenericSingleObjectDescriptorTestCaseMixin, TestCase):
     descriptor_class = TopChildDescriptorFromField
-    attr = 'last_book'
+    attr = "last_book"
 
     @classmethod
     def setUpTestData(cls):
         cls.first_book = BookWithYear.objects.create(title="Book One", published_year=1900)
         cls.second_book = BookWithYear.objects.create(title="Book Two", published_year=1980)
-        cls.author = AuthorWithLastBook.objects.create(
-            name="Jane",
-            age=20,
-            first_book=cls.first_book
-        )
+        cls.author = AuthorWithLastBook.objects.create(name="Jane", age=20, first_book=cls.first_book)
         cls.author.books_with_year.add(cls.first_book, cls.second_book)
 
     def get_object(self):
@@ -38,11 +32,9 @@ class TopChildDescriptorFromFieldTests(
         self.author.books_with_year.clear()
 
 
-class TopChildDescriptorFromGenericRelationTests(
-        GenericSingleObjectDescriptorTestCaseMixin,
-        TestCase):
+class TopChildDescriptorFromGenericRelationTests(GenericSingleObjectDescriptorTestCaseMixin, TestCase):
     descriptor_class = TopChildDescriptorFromGenericRelation
-    attr = 'latest_comment'
+    attr = "latest_comment"
 
     @classmethod
     def setUpTestData(cls):

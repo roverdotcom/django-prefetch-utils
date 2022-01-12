@@ -52,9 +52,7 @@ for mod_string in DJANGO_TEST_MODULES:
         if attr in globals():
             continue
 
-        new_cls = type(cls)(
-            "Backport{}".format(cls.__name__), (EnableBackportMixin, cls), {}
-        )
+        new_cls = type(cls)("Backport{}".format(cls.__name__), (EnableBackportMixin, cls), {})
         globals()["Backport{}".format(attr)] = new_cls
         del cls
         del new_cls

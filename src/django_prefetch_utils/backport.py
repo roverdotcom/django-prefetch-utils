@@ -17,7 +17,7 @@ def prefetch_related_objects(model_instances, *related_lookups):
     # We need to be able to dynamically add to the list of prefetch_related
     # lookups that we look up (see below).  So we need some book keeping to
     # ensure we don't do duplicate work.
-    done_queries = {}    # dictionary of things like 'foo__bar': [results]
+    done_queries = {}  # dictionary of things like 'foo__bar': [results]
 
     auto_lookups = set()  # we add to this as we go through.
     followed_descriptors = set()  # recursion protection
@@ -27,8 +27,10 @@ def prefetch_related_objects(model_instances, *related_lookups):
         lookup = all_lookups.pop()
         if lookup.prefetch_to in done_queries:
             if lookup.queryset is not None:
-                raise ValueError("'%s' lookup was already seen with a different queryset. "
-                                 "You may need to adjust the ordering of your lookups." % lookup.prefetch_to)
+                raise ValueError(
+                    "'%s' lookup was already seen with a different queryset. "
+                    "You may need to adjust the ordering of your lookups." % lookup.prefetch_to
+                )
 
             continue
 
@@ -54,7 +56,7 @@ def prefetch_related_objects(model_instances, *related_lookups):
                 # Since prefetching can re-use instances, it is possible to have
                 # the same instance multiple times in obj_list, so obj might
                 # already be prepared.
-                if not hasattr(obj, '_prefetched_objects_cache'):
+                if not hasattr(obj, "_prefetched_objects_cache"):
                     try:
                         obj._prefetched_objects_cache = {}
                     except (AttributeError, TypeError):
@@ -77,29 +79,28 @@ def prefetch_related_objects(model_instances, *related_lookups):
             prefetcher, descriptor, attr_found, is_fetched = get_prefetcher(first_obj, through_attr, to_attr)
 
             if not attr_found:
-                raise AttributeError("Cannot find '%s' on %s object, '%s' is an invalid "
-                                     "parameter to prefetch_related()" %
-                                     (through_attr, first_obj.__class__.__name__, lookup.prefetch_through))
+                raise AttributeError(
+                    "Cannot find '%s' on %s object, '%s' is an invalid "
+                    "parameter to prefetch_related()"
+                    % (through_attr, first_obj.__class__.__name__, lookup.prefetch_through)
+                )
 
             if level == len(through_attrs) - 1 and prefetcher is None:
                 # Last one, this *must* resolve to something that supports
                 # prefetching, otherwise there is no point adding it and the
                 # developer asking for it has made a mistake.
-                raise ValueError("'%s' does not resolve to an item that supports "
-                                 "prefetching - this is an invalid parameter to "
-                                 "prefetch_related()." % lookup.prefetch_through)
+                raise ValueError(
+                    "'%s' does not resolve to an item that supports "
+                    "prefetching - this is an invalid parameter to "
+                    "prefetch_related()." % lookup.prefetch_through
+                )
 
             obj_to_fetch = None
             if prefetcher is not None:
                 obj_to_fetch = [obj for obj in obj_list if not is_fetched(obj)]
 
             if obj_to_fetch:
-                obj_list, additional_lookups = prefetch_one_level(
-                    obj_to_fetch,
-                    prefetcher,
-                    lookup,
-                    level,
-                )
+                obj_list, additional_lookups = prefetch_one_level(obj_to_fetch, prefetcher, lookup, level)
                 # We need to ensure we don't keep adding lookups from the
                 # same relationships to stop infinite recursion. So, if we
                 # are already on an automatically added lookup, don't add
@@ -120,7 +121,7 @@ def prefetch_related_objects(model_instances, *related_lookups):
                 # that we can continue with nullable or reverse relations.
                 new_obj_list = []
                 for obj in obj_list:
-                    if through_attr in getattr(obj, '_prefetched_objects_cache', ()):
+                    if through_attr in getattr(obj, "_prefetched_objects_cache", ()):
                         # If related objects have been prefetched, use the
                         # cache rather than the object's through_attr.
                         new_obj = list(obj._prefetched_objects_cache.get(through_attr))
@@ -152,6 +153,7 @@ def get_prefetcher(instance, through_attr, to_attr):
      a function that takes an instance and returns a boolean that is True if
      the attribute has already been fetched for that instance)
     """
+
     def has_to_attr_attribute(instance):
         return hasattr(instance, to_attr)
 
@@ -169,7 +171,7 @@ def get_prefetcher(instance, through_attr, to_attr):
         if rel_obj_descriptor:
             # singly related object, descriptor object has the
             # get_prefetch_queryset() method.
-            if hasattr(rel_obj_descriptor, 'get_prefetch_queryset'):
+            if hasattr(rel_obj_descriptor, "get_prefetch_queryset"):
                 prefetcher = rel_obj_descriptor
                 is_fetched = rel_obj_descriptor.is_cached
             else:
@@ -177,17 +179,19 @@ def get_prefetcher(instance, through_attr, to_attr):
                 # the attribute on the instance rather than the class to
                 # support many related managers
                 rel_obj = getattr(instance, through_attr)
-                if hasattr(rel_obj, 'get_prefetch_queryset'):
+                if hasattr(rel_obj, "get_prefetch_queryset"):
                     prefetcher = rel_obj
                 if through_attr != to_attr:
                     # Special case cached_property instances because hasattr
                     # triggers attribute computation and assignment.
                     if isinstance(getattr(instance.__class__, to_attr, None), cached_property):
+
                         def has_cached_property(instance):
                             return to_attr in instance.__dict__
 
                         is_fetched = has_cached_property
                 else:
+
                     def in_prefetched_cache(instance):
                         return through_attr in instance._prefetched_objects_cache
 
@@ -218,8 +222,9 @@ def prefetch_one_level(instances, prefetcher, lookup, level):
     # The 'values to be matched' must be hashable as they will be used
     # in a dictionary.
 
-    rel_qs, rel_obj_attr, instance_attr, single, cache_name, is_descriptor = (
-        prefetcher.get_prefetch_queryset(instances, lookup.get_current_queryset(level)))
+    (rel_qs, rel_obj_attr, instance_attr, single, cache_name, is_descriptor) = prefetcher.get_prefetch_queryset(
+        instances, lookup.get_current_queryset(level)
+    )
     # We have to handle the possibility that the QuerySet we just got back
     # contains some prefetch_related lookups. We don't want to trigger the
     # prefetch_related functionality by evaluating the query. Rather, we need
@@ -227,8 +232,7 @@ def prefetch_one_level(instances, prefetcher, lookup, level):
     # Copy the lookups in case it is a Prefetch object which could be reused
     # later (happens in nested prefetch_related).
     additional_lookups = [
-        copy.copy(additional_lookup) for additional_lookup
-        in getattr(rel_qs, '_prefetch_related_lookups', ())
+        copy.copy(additional_lookup) for additional_lookup in getattr(rel_qs, "_prefetch_related_lookups", ())
     ]
     if additional_lookups:
         # Don't need to clone because the manager should have given us a fresh
@@ -254,7 +258,7 @@ def prefetch_one_level(instances, prefetcher, lookup, level):
         except exceptions.FieldDoesNotExist:
             pass
         else:
-            msg = 'to_attr={} conflicts with a field on the {} model.'
+            msg = "to_attr={} conflicts with a field on the {} model."
             raise ValueError(msg.format(to_attr, model.__name__))
 
     # Whether or not we're prefetching the last part of the lookup.

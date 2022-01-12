@@ -35,7 +35,7 @@ def get_identity_map_prefetcher(identity_map, descriptor, prefetcher):
         ReverseManyToOneDescriptor: ReverseManyToOneDescriptorPrefetchWrapper,
         ManyToManyDescriptor: ManyToManyRelatedManagerWrapper,
         GenericForeignKey: GenericForeignKeyPrefetchWrapper,
-      }
+    }
     wrapper_cls = wrappers.get(type(descriptor), IdentityMapPrefetcher)
     return wrapper_cls(identity_map, prefetcher)
 
@@ -68,9 +68,7 @@ def get_prefetcher(obj_list, through_attr, to_attr):
         # get_prefetch_queryset() method.
         if hasattr(rel_obj_descriptor, "get_prefetch_queryset"):
             prefetcher = rel_obj_descriptor
-            needs_fetching = [
-                obj for obj in obj_list if not rel_obj_descriptor.is_cached(obj)
-            ]
+            needs_fetching = [obj for obj in obj_list if not rel_obj_descriptor.is_cached(obj)]
         else:
             # descriptor doesn't support prefetching, so we go ahead and get
             # the attribute on the instance rather than the class to
@@ -81,22 +79,12 @@ def get_prefetcher(obj_list, through_attr, to_attr):
             if through_attr != to_attr:
                 # Special case cached_property instances because hasattr
                 # triggers attribute computation and assignment.
-                if isinstance(
-                    getattr(instance.__class__, to_attr, None), cached_property
-                ):
-                    needs_fetching = [
-                        obj for obj in obj_list if to_attr not in obj.__dict__
-                    ]
+                if isinstance(getattr(instance.__class__, to_attr, None), cached_property):
+                    needs_fetching = [obj for obj in obj_list if to_attr not in obj.__dict__]
                 else:
-                    needs_fetching = [
-                        obj for obj in obj_list if not hasattr(obj, to_attr)
-                    ]
+                    needs_fetching = [obj for obj in obj_list if not hasattr(obj, to_attr)]
             else:
-                needs_fetching = [
-                    obj
-                    for obj in obj_list
-                    if through_attr not in obj._prefetched_objects_cache
-                ]
+                needs_fetching = [obj for obj in obj_list if through_attr not in obj._prefetched_objects_cache]
 
     return prefetcher, rel_obj_descriptor, attr_found, needs_fetching
 
@@ -163,11 +151,7 @@ def prefetch_related_objects(*args, **kwargs):
        :func:`django_prefetch_utils.identity_map.persistent.use_persistent_prefetch_identity_map`
 
     """
-    return prefetch_related_objects_impl(
-        get_default_prefetch_identity_map(),
-        *args,
-        **kwargs
-    )
+    return prefetch_related_objects_impl(get_default_prefetch_identity_map(), *args, **kwargs)
 
 
 def use_prefetch_identity_map():
@@ -213,9 +197,7 @@ def prefetch_related_objects_impl(identity_map, model_instances, *related_lookup
         else:
             additional_lookups = [
                 copy.copy(additional_lookup)
-                for additional_lookup in getattr(
-                    queryset_or_lookups, "_prefetch_related_lookups", ()
-                )
+                for additional_lookup in getattr(queryset_or_lookups, "_prefetch_related_lookups", ())
             ]
 
         if not additional_lookups:
@@ -232,8 +214,7 @@ def prefetch_related_objects_impl(identity_map, model_instances, *related_lookup
             if lookup.queryset is not None:
                 raise ValueError(
                     "'%s' lookup was already seen with a different queryset. "
-                    "You may need to adjust the ordering of your lookups."
-                    % lookup.prefetch_to
+                    "You may need to adjust the ordering of your lookups." % lookup.prefetch_to
                 )
             continue  # pragma: no cover
 
@@ -279,22 +260,14 @@ def prefetch_related_objects_impl(identity_map, model_instances, *related_lookup
             # of prefetch_related), so what applies to first object applies to all.
             first_obj = obj_list[0]
             to_attr = lookup.get_current_to_attr(level)[0]
-            prefetcher, descriptor, attr_found, needs_fetching = get_prefetcher(
-                obj_list, through_attr, to_attr
-            )
-            prefetcher = get_identity_map_prefetcher(
-                identity_map, descriptor, prefetcher
-            )
+            prefetcher, descriptor, attr_found, needs_fetching = get_prefetcher(obj_list, through_attr, to_attr)
+            prefetcher = get_identity_map_prefetcher(identity_map, descriptor, prefetcher)
 
             if not attr_found:
                 raise AttributeError(
                     "Cannot find '%s' on %s object, '%s' is an invalid "
                     "parameter to prefetch_related()"
-                    % (
-                        through_attr,
-                        first_obj.__class__.__name__,
-                        lookup.prefetch_through,
-                    )
+                    % (through_attr, first_obj.__class__.__name__, lookup.prefetch_through)
                 )
 
             leaf = level == len(through_attrs) - 1
@@ -309,9 +282,7 @@ def prefetch_related_objects_impl(identity_map, model_instances, *related_lookup
                 )
 
             if prefetcher is not None and needs_fetching:
-                new_obj_list, additional_lookups = prefetch_one_level(
-                    needs_fetching, prefetcher, lookup, level
-                )
+                new_obj_list, additional_lookups = prefetch_one_level(needs_fetching, prefetcher, lookup, level)
                 obj_list = get_prefetched_objects_from_list(obj_list, to_attr)
                 done_queries[prefetch_to] = obj_list
                 add_additional_lookups_from_queryset(prefetch_to, additional_lookups)

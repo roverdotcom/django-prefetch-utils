@@ -25,7 +25,7 @@ class EqualFieldsDescriptor(GenericPrefetchRelatedDescriptor):
 
     # An internal class to store the mapping between the fields on the two
     # models
-    _FieldMapping = namedtuple('FieldMapping', ('self_field', 'related_field'))
+    _FieldMapping = namedtuple("FieldMapping", ("self_field", "related_field"))
 
     def __init__(self, related_model, join_fields):
         """
@@ -37,10 +37,7 @@ class EqualFieldsDescriptor(GenericPrefetchRelatedDescriptor):
             raise ValueError("Must supply fields to join on")
 
         self._related_model = related_model
-        self.join_fields = tuple(
-            self._FieldMapping(*jf)
-            for jf in self.preprocess_join_fields(join_fields)
-        )
+        self.join_fields = tuple(self._FieldMapping(*jf) for jf in self.preprocess_join_fields(join_fields))
 
     def preprocess_join_fields(self, join_fields):
         """
@@ -48,10 +45,7 @@ class EqualFieldsDescriptor(GenericPrefetchRelatedDescriptor):
         """
         if isinstance(join_fields, str):
             join_fields = [join_fields]
-        return [
-            join_field if isinstance(join_field, tuple) else (join_field,)*2
-            for join_field in join_fields
-        ]
+        return [join_field if isinstance(join_field, tuple) else (join_field,) * 2 for join_field in join_fields]
 
     def get_prefetch_model_class(self):
         """
@@ -70,9 +64,7 @@ class EqualFieldsDescriptor(GenericPrefetchRelatedDescriptor):
 
         :rtype: tuple
         """
-        return tuple(
-            getattr(rel_obj, fields.related_field) for fields in self.join_fields
-        )
+        return tuple(getattr(rel_obj, fields.related_field) for fields in self.join_fields)
 
     def get_join_value_for_instance(self, instance):
         """
@@ -80,9 +72,7 @@ class EqualFieldsDescriptor(GenericPrefetchRelatedDescriptor):
 
         :rtype: tuple
         """
-        return tuple(
-            getattr(instance, fields.self_field) for fields in self.join_fields
-        )
+        return tuple(getattr(instance, fields.self_field) for fields in self.join_fields)
 
     def filter_queryset_for_instances(self, queryset, instances):
         """
@@ -98,9 +88,7 @@ class EqualFieldsDescriptor(GenericPrefetchRelatedDescriptor):
         if len(self.join_fields) == 1:
             self_field, related_field = self.join_fields[0]
             values = [getattr(instance, self_field) for instance in instances]
-            return queryset.filter(**{
-                '{}__in'.format(related_field): values
-            })
+            return queryset.filter(**{"{}__in".format(related_field): values})
 
         # In the case of multiple join fields, we construct a queryset for each
         # instance and then union them together.
@@ -109,9 +97,6 @@ class EqualFieldsDescriptor(GenericPrefetchRelatedDescriptor):
         for instance in instances:
             filter_kwargs = {}
             for fields in self.join_fields:
-                filter_kwargs[fields.related_field] = getattr(
-                    instance,
-                    fields.self_field
-                )
+                filter_kwargs[fields.related_field] = getattr(instance, fields.self_field)
             instance_querysets.append(qs.filter(**filter_kwargs))
         return qs.none().union(*instance_querysets)

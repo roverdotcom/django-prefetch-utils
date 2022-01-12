@@ -14,7 +14,18 @@ from .person import Membership
 from .person import Person
 
 __all__ = [
-    'Address', 'Article', 'ArticleIdea', 'ArticleTag', 'ArticleTranslation',
-    'Contact', 'Country', 'Customer', 'Friendship', 'Group', 'Membership',
-    'NewsArticle', 'Person', 'SlugPage',
+    "Address",
+    "Article",
+    "ArticleIdea",
+    "ArticleTag",
+    "ArticleTranslation",
+    "Contact",
+    "Country",
+    "Customer",
+    "Friendship",
+    "Group",
+    "Membership",
+    "NewsArticle",
+    "Person",
+    "SlugPage",
 ]

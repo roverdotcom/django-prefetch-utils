@@ -147,7 +147,6 @@ class use_original_prefetch_related_objects(override_prefetch_related_objects):
             dogs = list(Dog.objects.prefetch_related('toys'))
 
     """
+
     def __init__(self):
-        super().__init__(
-            original_prefetch_related_objects
-        )
+        super().__init__(original_prefetch_related_objects)

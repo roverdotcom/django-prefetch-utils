@@ -26,45 +26,33 @@ class Comment(models.Model):
     content_object = GenericForeignKey(ct_field="content_type", fk_field="object_pk")
 
     class Meta:
-        ordering = ['id']
+        ordering = ["id"]
 
 
 class BookWithAuthorCount(Book):
     class Meta(object):
         proxy = True
 
-    authors_count = AnnotationDescriptor(Count('authors'))
-    comments = GenericRelation(Comment, object_id_field='object_pk')
+    authors_count = AnnotationDescriptor(Count("authors"))
+    comments = GenericRelation(Comment, object_id_field="object_pk")
 
-    latest_comment = TopChildDescriptorFromGenericRelation(
-        comments,
-        order_by=('-id',)
-    )
+    latest_comment = TopChildDescriptorFromGenericRelation(comments, order_by=("-id",))
 
 
 class ReaderWithAuthorsRead(Reader):
     class Meta(object):
         proxy = True
 
-    authors_read = RelatedQuerySetDescriptorViaLookup(Author, 'books__read_by')
-    an_author_read = RelatedSingleObjectDescriptorViaLookup(
-        'prefetch_related.Author',
-        'books__read_by'
-    )
+    authors_read = RelatedQuerySetDescriptorViaLookup(Author, "books__read_by")
+    an_author_read = RelatedSingleObjectDescriptorViaLookup("prefetch_related.Author", "books__read_by")
 
 
 class AuthorWithLastBook(AuthorWithAge):
-    last_book = TopChildDescriptorFromField(
-        'prefetch_related.BookWithYear.aged_authors',
-        order_by=('-published_year',)
-    )
+    last_book = TopChildDescriptorFromField("prefetch_related.BookWithYear.aged_authors", order_by=("-published_year",))
 
 
 class BookWithYearlyBios(BookWithYear):
-    bios = EqualFieldsDescriptor(
-        'prefetch_related.YearlyBio',
-        [('published_year', 'year')]
-    )
+    bios = EqualFieldsDescriptor("prefetch_related.YearlyBio", [("published_year", "year")])
 
 
 class XYZModelOne(models.Model):
@@ -78,4 +66,4 @@ class XYZModelTwo(models.Model):
     y = models.IntegerField()
     z = models.CharField(max_length=10)
 
-    ones = EqualFieldsDescriptor(XYZModelOne, ['x', 'y', 'z'])
+    ones = EqualFieldsDescriptor(XYZModelOne, ["x", "y", "z"])

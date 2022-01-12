@@ -44,21 +44,14 @@ class PrefetchRelatedObjectsTests(TestCase):
     def test_second_prefetch_with_queryset(self):
         with self.assertRaises(ValueError):
             prefetch_related_objects(
-                [self.book],
-                "authors",
-                Prefetch(
-                    "authors", queryset=Author.objects.prefetch_related("first_book")
-                ),
+                [self.book], "authors", Prefetch("authors", queryset=Author.objects.prefetch_related("first_book"))
             )
 
     def test_duplicate_prefetch_with_queryset(self):
         prefetch_related_objects([self.book], "authors")
         with self.assertNumQueries(0):
             prefetch_related_objects(
-                [self.book],
-                Prefetch(
-                    "authors", queryset=Author.objects.prefetch_related("first_book")
-                ),
+                [self.book], Prefetch("authors", queryset=Author.objects.prefetch_related("first_book"))
             )
             self.assertIs(self.book.authors.all()[0].first_book, self.book)
 
@@ -80,6 +73,4 @@ class RecursionProtectionTests(EnableIdentityMapMixin, TestCase):
 
     def test_traversing(self):
         with self.assertNumQueries(3):
-            traverse_qs(
-                DogWithToys.objects.all(), [["toys", "dogs", "toys", "dogs", "toys"]]
-            )
+            traverse_qs(DogWithToys.objects.all(), [["toys", "dogs", "toys", "dogs", "toys"]])

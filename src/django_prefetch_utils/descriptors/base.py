@@ -8,6 +8,7 @@ class GenericPrefetchRelatedDescriptorManager(Manager):
     A :class:`django.db.models.Manager` to be used in conjunction
     with :class:`RelatedQuerySetDescriptor`.
     """
+
     def __init__(self, descriptor, instance):
         self.descriptor = descriptor
         self.instance = instance
@@ -30,10 +31,7 @@ class GenericPrefetchRelatedDescriptorManager(Manager):
 
         :rtype: :class:`django.db.models.QuerySet`
         """
-        return self.descriptor.filter_queryset_for_instances(
-            queryset,
-            [self.instance],
-        )
+        return self.descriptor.filter_queryset_for_instances(queryset, [self.instance])
 
     def get_queryset(self):
         """
@@ -224,7 +222,7 @@ class GenericSinglePrefetchRelatedDescriptorMixin(object):
         # Remove warning from Django 3.1: RemovedInDjango31Warning:
         # QuerySet won't use Meta.ordering in Django 3.1. Add .order_by('id') to
         # retain the current query.
-        return qs.order_by('pk')
+        return qs.order_by("pk")
 
     def is_cached(self, obj):
         """
