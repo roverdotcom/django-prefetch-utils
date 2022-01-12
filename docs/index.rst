@@ -1,11 +1,10 @@
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
 
    self
    getting_started
    usage
-   identity_map_comparison
    reference/index
    contributing
    authors

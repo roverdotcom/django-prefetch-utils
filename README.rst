@@ -10,8 +10,7 @@ Overview
     * - docs
       - |docs|
     * - tests
-      - | |travis|
-        | |codecov|
+      - |codecov|
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
         | |commits-since|
@@ -20,10 +19,6 @@ Overview
     :target: https://readthedocs.org/projects/django-prefetch-utils
     :alt: Documentation Status
 
-
-.. |travis| image:: https://travis-ci.org/roverdotcom/django-prefetch-utils.svg?branch=master
-    :alt: Travis-CI Build Status
-    :target: https://travis-ci.org/roverdotcom/django-prefetch-utils
 
 .. |codecov| image:: https://codecov.io/github/roverdotcom/django-prefetch-utils/coverage.svg?branch=master
     :alt: Coverage Status
@@ -52,35 +47,14 @@ Overview
 
 .. end-badges
 
-This library currently provides a replacement implementation of
-``prefetch_related_objects`` which uses an `identity map
-<https://en.wikipedia.org/wiki/Identity_map_pattern>`_ to
-automatically reduce the number of queries performed when prefetching.
+This library provides a number of utilities for working with and extending
+Django's ``prefetch_related`` system. Currently, it consists of:
 
-For example, considered the following data model::
-
-   class Toy(models.Model):
-       dog = models.ForeignKey('dogs.Dog')
-
-   class Dog(models.Model):
-       name = models.CharField()
-       favorite_toy = models.ForeignKey('toys.Toy', null=True)
-
-
-With this library, we get don't need to do a database query to
-perform the prefetch for ``favorite_toy`` since that object
-had already been fetched as part of the prefetching for ``toy_set``::
-
-   >>> dog = Dog.objects.prefetch_related('toys', 'favorite_toy')[0]
-   SELECT * from dogs_dog limit 1;
-   SELECT * FROM toys_toy where toys_toy.dog_id IN (1);
-   >>> dog.favorite_toy is dog.toy_set.all()[0]  # no queries done
-   True
-
-
-The plan is to increase the scope of the library in future versions to
-provide additional tools for working with ``prefetch_related``.
-
+  * a collection of descriptors to define relationships between models which
+    support prefetching
+  * a new implementation of ``prefetch_related_objects`` which supports an
+    identity map so that multiple copies of the same object are not fetched
+    multiple times.
 
 * Free software: BSD 3-Clause License
 

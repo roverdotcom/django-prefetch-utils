@@ -1,6 +1,6 @@
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
 
    descriptors_usage
-   identity_map_usage
+   identity_map

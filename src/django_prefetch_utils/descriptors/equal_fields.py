@@ -12,10 +12,10 @@ class EqualFieldsDescriptor(GenericPrefetchRelatedDescriptor):
 
         >>> class Book(models.Model):
         ...     title = models.CharField(max_length=32)
-        ...     year = models.IntegerField()
+        ...     published_year = models.IntegerField()
         >>> class Author(models.Model):
-        ...     birth_day = models.IntegerField()
-        ...     birth_books = EqualFieldsDescriptor(Book, 'year')
+        ...     birth_year = models.IntegerField()
+        ...     birth_books = EqualFieldsDescriptor(Book, [('birth_year', 'published_year')])
         ...
         >>> # Get the books published in the year the author was born
         >>> author = Author.objects.prefetch_related('birth_books')
